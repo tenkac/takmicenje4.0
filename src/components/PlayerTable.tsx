@@ -76,7 +76,7 @@ export default function PlayerTable({ allBets, activePlayer, setActivePlayer, on
             ← Menu
           </button>
           <div className="flex flex-col items-center">
-            <h1 className="text-xl md:text-5xl font-black tracking-tighter italic uppercase text-white">ARENA <span className="text-blue-500">LIVE</span></h1>
+            <h1 className="text-xl md:text-5xl font-black tracking-tighter italic uppercase text-white">TAKMICENJE <span className="text-blue-500">4.0</span></h1>
           </div>
           <div className="w-20"></div>
         </div>
