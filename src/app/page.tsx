@@ -111,8 +111,27 @@ export default function BettingApp() {
     });
   };
 
-  if (loading) return <div className="h-screen flex items-center justify-center bg-gray-900 text-white">Loading Bets...</div>;
+if (loading) return (
+    <div className="h-screen flex flex-col items-center justify-center bg-gradient-to-br from-gray-900 via-black to-blue-900 text-white font-sans p-6 text-center">
+      {/* Background Glows for consistency */}
+      <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-blue-600/10 blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-[-10%] left-[-10%] w-96 h-96 bg-orange-600/10 blur-[120px] rounded-full pointer-events-none" />
 
+      <div className="relative z-10 animate-pulse">
+        <h1 className="text-4xl md:text-7xl font-black italic uppercase tracking-tighter leading-none mb-4">
+          TAKMICENJE <span className="text-blue-500"></span>
+        </h1>
+        <div className="flex items-center justify-center gap-2">
+          <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+          <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+          <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
+        </div>
+        <p className="mt-6 text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-[0.4em]">
+          Entering the Arena
+        </p>
+      </div>
+    </div>
+  );
   if (currentView === "landing") return <LandingPage onNavigate={setCurrentView} />;
   
   if (currentView === "leaderboard") {
