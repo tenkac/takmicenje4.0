@@ -6,7 +6,6 @@ interface Props {
   onBack: () => void;
 }
 
-// --- PLAYER THEMES (Copying this here so it matches PlayerTable) ---
 const PLAYER_THEMES: Record<string, { bg: string, text: string, icon: string }> = {
   "Vlado":  { bg: "bg-blue-600",   text: "text-blue-600",   icon: "/Avatars/vlado.jpg" },
   "Fika":   { bg: "bg-red-600",    text: "text-red-600",    icon: "/Avatars/fika.jpg" },
@@ -17,7 +16,6 @@ const PLAYER_THEMES: Record<string, { bg: string, text: string, icon: string }> 
 
 export default function Leaderboard({ allBets, onBack }: Props) {
   
-  // Helper to calculate score
   const calculateTotal = (playerName: string) => {
     const rows = allBets[playerName] || [];
     let total = 0;
@@ -28,79 +26,103 @@ export default function Leaderboard({ allBets, onBack }: Props) {
     return parseFloat(total.toFixed(2));
   };
 
-  // Create sorted rankings
   const rankings = PLAYERS.map(player => ({
     name: player,
     score: calculateTotal(player)
   })).sort((a, b) => b.score - a.score);
 
   return (
-    <div className="min-h-screen bg-gray-200 p-8 font-sans text-black">
+    // DARK CHAMPIONSHIP BACKGROUND
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-black to-gray-900 p-4 md:p-8 font-sans text-white relative overflow-hidden">
       
-      {/* Top Navigation */}
-      <button onClick={onBack} className="mb-8 bg-black text-white px-6 py-3 rounded font-bold shadow-lg hover:bg-gray-800 transition">
-        ← Back to Home
+      {/* BACKGROUND GLOW EFFECT */}
+      <div className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[300px] md:w-[600px] h-[300px] md:h-[600px] bg-orange-500/20 blur-[80px] md:blur-[120px] rounded-full pointer-events-none" />
+
+      {/* NAVIGATION */}
+      <button 
+        onClick={onBack} 
+        className="relative z-10 mb-6 bg-white/10 backdrop-blur-md text-white border border-white/20 px-4 py-2 md:px-6 md:py-3 rounded-xl font-bold shadow-xl hover:bg-white/20 transition text-xs md:text-base"
+      >
+        ←  Nazad
       </button>
 
-      <div className="max-w-2xl mx-auto border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] bg-white">
+      <div className="relative z-10 max-w-2xl mx-auto border-2 border-white/10 shadow-2xl rounded-3xl bg-black/40 backdrop-blur-xl overflow-hidden">
           
-          {/* Header */}
-          <div className="bg-black text-[#f4b084] text-4xl font-black text-center py-6 uppercase tracking-widest border-b-4 border-black">
-              🏆 Standings
+          {/* HEADER */}
+          <div className="bg-gradient-to-r from-transparent via-white/5 to-transparent text-[#f4b084] text-2xl md:text-4xl font-black text-center py-6 md:py-8 uppercase tracking-[0.2em] border-b border-white/10">
+              🏆 PODIJUM
           </div>
 
-          {/* List of Players */}
-          {rankings.map((rank, index) => {
-              const theme = PLAYER_THEMES[rank.name] || { bg: "bg-gray-500", text: "text-gray-500", icon: "" };
-              
-              // Special styling for Top 3
-              let rankBadge = "bg-gray-100 border-gray-300";
-              let medal = `#${index + 1}`;
-              
-              if (index === 0) {
-                  rankBadge = "bg-yellow-200 border-yellow-400";
-                  medal = "🥇";
-              } else if (index === 1) {
-                  rankBadge = "bg-gray-300 border-gray-400";
-                  medal = "🥈";
-              } else if (index === 2) {
-                  rankBadge = "bg-orange-200 border-orange-400";
-                  medal = "🥉";
-              }
+          {/* RANK LIST */}
+          <div className="flex flex-col">
+            {rankings.map((rank, index) => {
+                const theme = PLAYER_THEMES[rank.name] || { bg: "bg-gray-500", text: "text-gray-500", icon: "" };
+                
+                // Styling based on position
+                let rankBox = "bg-white/5 border-white/10";
+                let medal = `#${index + 1}`;
+                let glow = "";
+                
+                if (index === 0) {
+                    rankBox = "bg-yellow-500/20 border-yellow-500/50 text-yellow-400";
+                    medal = "🥇";
+                    glow = "shadow-[0_0_20px_rgba(234,179,8,0.2)]";
+                } else if (index === 1) {
+                    rankBox = "bg-gray-400/20 border-gray-400/50 text-gray-300";
+                    medal = "🥈";
+                } else if (index === 2) {
+                    rankBox = "bg-orange-400/20 border-orange-400/50 text-orange-300";
+                    medal = "🥉";
+                }
 
-              return (
-                  <div key={rank.name} className={`flex justify-between items-center p-4 border-b-2 border-black last:border-b-0 ${index < 3 ? 'bg-white' : 'bg-gray-50'}`}>
-                      
-                      {/* Left Side: Rank + Avatar + Name */}
-                      <div className="flex items-center gap-6">
-                          
-                          {/* Rank Badge */}
-                          <div className={`w-16 h-16 flex items-center justify-center text-4xl font-black border-4 rounded-xl ${rankBadge} shadow-sm`}>
-                              {medal}
-                          </div>
+                return (
+                    <div 
+                        key={rank.name} 
+                        className={`flex items-center p-4 md:p-6 border-b border-white/5 last:border-b-0 hover:bg-white/5 transition-colors group`}
+                    >
+                        
+                        {/* RANK BADGE */}
+                        <div className={`w-12 h-12 md:w-16 md:h-16 flex-shrink-0 flex items-center justify-center text-xl md:text-3xl font-black border rounded-2xl ${rankBox} ${glow} transition-transform group-hover:scale-110`}>
+                            {medal}
+                        </div>
 
-                          {/* Player Avatar */}
-                          <div className={`w-20 h-20 rounded-full border-4 border-white shadow-md overflow-hidden ${theme.bg}`}>
-                              <img src={theme.icon} alt={rank.name} className="w-full h-full object-cover" />
-                          </div>
+                        {/* AVATAR */}
+                        <div className={`ml-4 md:ml-6 w-14 h-14 md:w-20 md:h-20 flex-shrink-0 rounded-2xl border-2 border-white/20 shadow-lg overflow-hidden ${theme.bg}`}>
+                            <img src={theme.icon} alt={rank.name} className="w-full h-full object-cover" />
+                        </div>
 
-                          {/* Player Name */}
-                          <div className="flex flex-col">
-                              <span className={`text-3xl font-black uppercase tracking-wide ${theme.text}`}>
-                                  {rank.name}
-                              </span>
-                              {index === 0 && <span className="text-xs font-bold bg-black text-yellow-400 px-2 py-0.5 rounded w-fit">CURRENT LEADER</span>}
-                          </div>
-                      </div>
+                        {/* NAME & TREND */}
+                        <div className="ml-4 md:ml-6 flex-grow flex flex-col justify-center">
+                            <div className="flex items-center gap-2">
+                                <span className={`text-xl md:text-3xl font-black uppercase tracking-tight leading-none ${index === 0 ? 'text-white' : 'text-gray-300'}`}>
+                                    {rank.name}
+                                </span>
+                                {/* TREND INDICATOR (Simulated) */}
+                                {index === 0 && <span className="animate-pulse text-green-400 text-xs md:text-sm">▲</span>}
+                            </div>
+                            {index === 0 && (
+                                <span className="text-[10px] md:text-xs font-bold text-yellow-500 uppercase tracking-widest mt-1">
+                                    Doktor Analize
+                                </span>
+                            )}
+                        </div>
 
-                      {/* Right Side: Score */}
-                      <div className="text-right">
-                          <span className="block text-4xl font-black">{rank.score.toFixed(2)}</span>
-                          <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Points</span>
-                      </div>
-                  </div>
-              );
-          })}
+                        {/* SCORE */}
+                        <div className="text-right flex-shrink-0">
+                            <span className={`block text-2xl md:text-4xl font-black leading-none ${index === 0 ? 'text-yellow-500' : 'text-white'}`}>
+                                {rank.score.toFixed(2)}
+                            </span>
+                            <span className="text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-widest">Poena</span>
+                        </div>
+                    </div>
+                );
+            })}
+          </div>
+      </div>
+      
+      {/* DECORATIVE FOOTER */}
+      <div className="mt-8 text-center text-gray-600 text-[10px] uppercase tracking-[0.3em] font-bold">
+        Takmicenje 1 • Sezona 2026
       </div>
     </div>
   );

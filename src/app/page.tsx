@@ -120,14 +120,17 @@ export default function BettingApp() {
     return <Leaderboard allBets={allBets} onBack={() => { fetchBets(); setCurrentView("landing"); }} />;
   }
   
+ // Inside src/app/page.tsx, update the return statement for PlayerTable:
+
   return (
-    <PlayerTable 
-      allBets={allBets} 
-      activePlayer={activePlayer} 
-      setActivePlayer={setActivePlayer} 
-      onAddPick={addPick} 
+    <PlayerTable
+      allBets={allBets}
+      activePlayer={activePlayer}
+      setActivePlayer={setActivePlayer}
+      onAddPick={addPick}
       onToggleStatus={toggleStatus}
-      onBack={() => { fetchBets(); setCurrentView("landing"); }} 
+      // FIX: Just change the view. Don't trigger extra logic that might conflict with the state.
+      onBack={() => setCurrentView("landing")}
     />
   );
 }
