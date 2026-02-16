@@ -33,7 +33,10 @@ export default function PlayerTable({ allBets, activePlayer, setActivePlayer, on
     if (s === "loss") return "bg-red-500/20 text-red-400 border-red-500/50";
     return "bg-white/5 text-gray-400 border-white/10";
   };
-
+  const isDateLocked = (rowDate: string) => {
+  const today = new Date().toLocaleDateString('en-CA'); 
+  return rowDate < today;
+};
   return (
     // UPDATED MAIN CONTAINER WITH LANDING PAGE GLOW
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-blue-900 text-white font-sans selection:bg-orange-500/30 relative overflow-hidden">
@@ -57,15 +60,71 @@ export default function PlayerTable({ allBets, activePlayer, setActivePlayer, on
         </div>
 
         <div className="max-w-7xl mx-auto p-4 lg:p-8 flex flex-col lg:flex-row gap-8">
-          {/* PLAYER NAV */}
-          <div className="lg:w-64 flex lg:flex-col gap-3 overflow-x-auto pb-4 lg:pb-0">
-            {PLAYERS.map(p => (
-              <button key={p} onClick={() => setActivePlayer(p)} className={`flex-shrink-0 flex items-center gap-4 p-4 rounded-2xl border transition-all ${activePlayer === p ? `${PLAYER_THEMES[p].border} bg-white/10 backdrop-blur-md` : "border-transparent opacity-50 hover:opacity-80 hover:bg-white/5"}`}>
-                <img src={PLAYER_THEMES[p].icon} className="w-10 h-10 rounded-full border border-white/20 shadow-sm" alt="" />
-                <span className={`font-black uppercase tracking-widest ${activePlayer === p ? PLAYER_THEMES[p].text : "text-white"}`}>{p}</span>
-              </button>
-            ))}
-          </div>
+                  {/* PLAYER NAV */}
+                  <div className="
+                                    /* Sidebar Container */
+                                    w-full lg:w-80           /* Increased desktop width to 320px */
+                                    flex lg:flex-col         /* Row on mobile, Column on desktop */
+                                    gap-3 lg:gap-4 
+                                    p-4 lg:p-6
+                                    
+                                    /* Scrolling Logic */
+                                    overflow-x-auto          /* Enable horizontal scroll on mobile */
+                                    lg:overflow-x-hidden     /* Kill horizontal scroll on desktop */
+                                    lg:overflow-y-auto       /* Allow vertical scroll if many players */
+                                    
+                                    scrollbar-hide           /* Keep it clean */
+                                    flex-shrink-0            /* Prevent the sidebar from being squashed */
+                                    "
+                    >
+                      {PLAYERS.map(p => {
+                          const isActive = activePlayer === p;
+                          const pTheme = PLAYER_THEMES[p];
+
+                          return (
+                              <button
+                                  key={p}
+                                  onClick={() => setActivePlayer(p)}
+                                  className={`
+                                            flex-shrink-0 flex items-center 
+                                            gap-4 lg:gap-6 
+                                            p-3 lg:p-5 
+                                            rounded-2xl lg:rounded-[2.5rem] 
+                                            border transition-all duration-300
+                                            w-auto lg:w-full      /* Auto width on mobile, Full width on desktop */
+                                            ${isActive
+                                          ? `${pTheme.border} bg-white/10 backdrop-blur-md shadow-2xl scale-100 lg:scale-105`
+                                          : "border-transparent opacity-40 hover:opacity-100 hover:bg-white/5"
+                                                }
+                                             `}
+                              >
+                                  {/* AVATAR CONTAINER */}
+                                  <div className={`
+                                                relative flex-shrink-0 rounded-full overflow-hidden border-2 border-white/20 shadow-lg
+                                                w-10 h-10       /* Mobile */
+                                                lg:w-20 lg:h-20 /* Large Desktop */
+                                                ${isActive ? "ring-4 ring-orange-500/20" : ""}
+                                                `}>
+                                      <img
+                                          src={pTheme.icon}
+                                          className="w-full h-full object-cover"
+                                          alt={p}
+                                      />
+                                  </div>
+
+                                  {/* PLAYER NAME */}
+                                    <span className={`
+                                        font-black uppercase tracking-widest whitespace-nowrap /* Prevents text from cutting off or wrapping */
+                                        text-xs         /* Mobile */
+                                        lg:text-xl      /* Desktop */
+                                        ${isActive ? pTheme.text : "text-white"}
+                                                 `}>
+                                      {p}
+                                  </span>
+                              </button>
+                          );
+                      })}
+                  </div>
 
           {/* MAIN ARENA */}
           <div className="flex-1 space-y-8">
@@ -74,9 +133,9 @@ export default function PlayerTable({ allBets, activePlayer, setActivePlayer, on
               <h3 className="text-xs font-black uppercase tracking-[0.3em] text-gray-500 mb-4">Dodaj par</h3>
               <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 <input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="bg-black/40 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-orange-500 transition-all text-white/80" />
-                <input placeholder="Match Name" value={form.matchName} onChange={e => setForm({...form, matchName: e.target.value})} className="bg-black/40 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-orange-500 col-span-2 md:col-span-1 text-white" />
+                <input placeholder="Utakmica" value={form.matchName} onChange={e => setForm({...form, matchName: e.target.value})} className="bg-black/40 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-orange-500 col-span-2 md:col-span-1 text-white" />
                 <input placeholder="Tip" value={form.tip} onChange={e => setForm({...form, tip: e.target.value})} className="bg-black/40 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-orange-500 text-center text-white" />
-                <input type="number" placeholder="Odds" value={form.odds} onChange={e => setForm({...form, odds: e.target.value})} className="bg-black/40 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-orange-500 text-center font-bold text-white" />
+                <input type="number" placeholder="Kvota" value={form.odds} onChange={e => setForm({...form, odds: e.target.value})} className="bg-black/40 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-orange-500 text-center font-bold text-white" />
                 <button onClick={handleAdd} className="col-span-2 md:col-span-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-400 hover:to-blue-500 text-black font-black uppercase rounded-xl transition-all active:scale-95 py-3 shadow-lg shadow-blue-500/20">DODAJ</button>
               </div>
             </div>
