@@ -12,11 +12,11 @@ interface Props {
 
 // --- PLAYER THEMES (PNG Avatars) ---
 const PLAYER_THEMES: Record<string, { bg: string, text: string, icon: string }> = {
-  "Vlado":  { bg: "bg-blue-600",   text: "text-blue-600",   icon: "/avatars/vlado.png" },
-  "Fika":   { bg: "bg-red-600",    text: "text-red-600",    icon: "/avatars/fika.png" },
-  "Labud":  { bg: "bg-green-600",  text: "text-green-600",  icon: "/avatars/labud.png" },
-  "Ilija":  { bg: "bg-purple-600", text: "text-purple-600", icon: "/avatars/ilija.png" },
-  "Dzoni":  { bg: "bg-yellow-500", text: "text-yellow-600", icon: "/avatars/dzoni.png" },
+  "Vlado":  { bg: "bg-blue-600",   text: "text-blue-600",   icon: "/Avatars/vlado.png" },
+  "Fika":   { bg: "bg-red-600",    text: "text-red-600",    icon: "/Avatars/fika.png" },
+  "Labud":  { bg: "bg-green-600",  text: "text-green-600",  icon: "/Avatars/labud.png" },
+  "Ilija":  { bg: "bg-purple-600", text: "text-purple-600", icon: "/Avatars/ilija.png" },
+  "Dzoni":  { bg: "bg-yellow-500", text: "text-yellow-600", icon: "/Avatars/dzoni.png" },
 };
 
 // --- SPORTS LIST (Emojis) ---
