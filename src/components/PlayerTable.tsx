@@ -9,6 +9,7 @@ interface Props {
   onAddPick: (date: string, sport: string, matchName: string, tip: string, odds: number) => void;
   onToggleStatus: (date: string, matchKey: "match1" | "match2") => void;
   onBack: () => void;
+  userEmail?: string; // <--- NEW: Accepts the logged-in user's email
 }
 
 const PLAYER_THEMES: Record<string, { bg: string, text: string, border: string, icon: string }> = {
@@ -19,38 +20,53 @@ const PLAYER_THEMES: Record<string, { bg: string, text: string, border: string, 
   "Dzoni":  { bg: "bg-yellow-500", text: "text-yellow-400", border: "border-yellow-500/50", icon: "/Avatars/dzoni.jpg" },
 };
 
-export default function PlayerTable({ allBets, activePlayer, setActivePlayer, onAddPick, onToggleStatus, onBack }: Props) {
+// --- CONFIGURATION ---
+const SPORTS = ["⚽", "🏀", "🎾", "🏒", "🤾", "🏐", "🏓", "🤽", "🎯", "🥊"];
+
+// ⚠️ UPDATE THESE EMAILS TO MATCH YOUR SUPABASE USERS
+const PLAYER_EMAILS: Record<string, string> = {
+    "Vlado": "vlado@takmicenje.com",
+    "Fika": "fika@takmicenje.com",
+    "Labud": "labud@takmicenje.com",
+    "Ilija": "ilija@takmicenje.com",
+    "Dzoni": "dzoni@takmicenje.com",
+};
+
+export default function PlayerTable({ allBets, activePlayer, setActivePlayer, onAddPick, onToggleStatus, onBack, userEmail }: Props) {
   const theme = PLAYER_THEMES[activePlayer] || PLAYER_THEMES["Vlado"];
   const [form, setForm] = useState({ date: new Date().toLocaleDateString('en-CA'), sport: "⚽", matchName: "", tip: "", odds: "" });
-  
-  // STATE FOR DEBOUNCE
+  const [showSportPicker, setShowSportPicker] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // --- SECURITY CHECK ---
+  // If userEmail is undefined (not logged in) or doesn't match the active player's email, they are a "Viewer"
+  // --- SECURITY CHECK ---
+  const ADMIN_EMAIL = "vlado@takmicenje.com"; // ⚠️ Must match the SQL email exactly
+
+  // Logic: 
+  // 1. Are they the Admin? -> YES, allow edit.
+  // 2. Are they the owner of this tab? -> YES, allow edit.
+  const isOwner = 
+    userEmail === ADMIN_EMAIL || 
+    (userEmail && userEmail.split('@')[0].toLowerCase() === activePlayer.toLowerCase());
   const handleAdd = async () => {
-    // 1. Check if already locked (Prevent Double Clicks)
     if (isSubmitting) return;
 
-    // 2. Validate the form data against the schema
+    // Validate
     const result = betSchema.safeParse(form);
-
-    // 3. If validation fails, show error and stop (Don't lock)
     if (!result.success) {
-      const firstError = result.error.issues[0].message;
-      alert(firstError);
+      alert(result.error.issues[0].message);
       return;
     }
 
-    // 4. Lock the button
     setIsSubmitting(true);
 
     try {
-      // 5. Submit valid data
       onAddPick(result.data.date, result.data.sport, result.data.matchName, result.data.tip, result.data.odds);
       setForm({ ...form, matchName: "", tip: "", odds: "" });
     } catch (e) {
       console.error(e);
     } finally {
-      // 6. Unlock after 1 second
       setTimeout(() => setIsSubmitting(false), 1000);
     }
   };
@@ -61,33 +77,28 @@ export default function PlayerTable({ allBets, activePlayer, setActivePlayer, on
     return "bg-white/5 text-gray-400 border-white/10";
   };
 
-  const isDateLocked = (rowDate: string) => {
-    const today = new Date().toLocaleDateString('en-CA'); 
-    return rowDate < today;
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-blue-900 text-white font-sans selection:bg-orange-500/30 relative overflow-hidden">
       
-      {/* DECORATIVE BACKGROUND GLOWS */}
+      {/* DECORATIVE GLOWS */}
       <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-blue-600/20 blur-[120px] rounded-full pointer-events-none" />
       <div className="absolute bottom-[-10%] left-[-10%] w-96 h-96 bg-orange-600/10 blur-[120px] rounded-full pointer-events-none" />
 
-      {/* CONTENT WRAPPER */}
       <div className="relative z-10">
         
-        {/* GLASS HEADER */}
+        {/* HEADER */}
         <div className="sticky top-0 z-50 backdrop-blur-xl bg-black/40 border-b border-white/10 p-4 flex justify-between items-center">
           <button onClick={onBack} className="bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl border border-white/10 transition-all text-xs font-bold uppercase tracking-widest">
             ← Menu
           </button>
           <div className="flex flex-col items-center">
-            <h1 className="text-xl md:text-2xl font-black tracking-tighter italic uppercase text-white">KLANICA <span className="text-blue-500">LIVE</span></h1>
+            <h1 className="text-xl md:text-5xl font-black tracking-tighter italic uppercase text-white">ARENA <span className="text-blue-500">LIVE</span></h1>
           </div>
           <div className="w-20"></div>
         </div>
 
         <div className="max-w-7xl mx-auto p-4 lg:p-8 flex flex-col lg:flex-row gap-8">
+            
             {/* PLAYER NAV */}
             <div className="w-full lg:w-80 flex lg:flex-col gap-3 overflow-x-auto lg:overflow-x-hidden lg:overflow-y-auto p-4 lg:p-6 scrollbar-hide flex-shrink-0">
               {PLAYERS.map(p => {
@@ -106,26 +117,65 @@ export default function PlayerTable({ allBets, activePlayer, setActivePlayer, on
 
           {/* MAIN ARENA */}
           <div className="flex-1 space-y-8">
-            {/* QUICK ADD FORM */}
-            <div className="bg-white/5 border border-white/10 p-6 rounded-3xl backdrop-blur-md shadow-xl">
-              <h3 className="text-xs font-black uppercase tracking-[0.3em] text-gray-500 mb-4">Dodaj par</h3>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                <input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="bg-black/40 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-orange-500 transition-all text-white/80" />
-                <input placeholder="Utakmica" value={form.matchName} onChange={e => setForm({...form, matchName: e.target.value})} className="bg-black/40 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-orange-500 col-span-2 md:col-span-1 text-white" />
-                <input placeholder="Tip" value={form.tip} onChange={e => setForm({...form, tip: e.target.value})} className="bg-black/40 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-orange-500 text-center text-white" />
-                <input type="number" placeholder="Kvota" value={form.odds} onChange={e => setForm({...form, odds: e.target.value})} className="bg-black/40 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-orange-500 text-center font-bold text-white" />
+            
+            {/* 🔒 SECURITY CHECK: ONLY SHOW FORM IF OWNER */}
+            {isOwner ? (
+                <div className="bg-white/5 border border-white/10 p-6 rounded-3xl backdrop-blur-md shadow-xl relative z-40">
+                <h3 className="text-xs font-black uppercase tracking-[0.3em] text-gray-500 mb-4">Dodaj par</h3>
                 
-                {/* DEBOUNCED BUTTON */}
-                <button 
-                  onClick={handleAdd} 
-                  disabled={isSubmitting} // Physically disables the button
-                  className={`col-span-2 md:col-span-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-400 hover:to-blue-500 text-black font-black uppercase rounded-xl transition-all active:scale-95 py-3 shadow-lg shadow-blue-500/20
-                  ${isSubmitting ? 'opacity-50 cursor-not-allowed grayscale' : ''}`} // Visual changes
-                >
-                  {isSubmitting ? "..." : "DODAJ"}
-                </button>
-              </div>
-            </div>
+                {/* IMPROVED LAYOUT GRID */}
+                <div className="grid grid-cols-2 md:grid-cols-[1.2fr_0.6fr_2fr_1fr_1fr_auto] gap-3 items-stretch">
+                    <input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="h-[52px] bg-black/40 border border-white/10 rounded-xl px-3 text-sm outline-none focus:border-blue-500 text-white" />
+                    
+                    {/* SPORT PICKER */}
+                    <div className="relative">
+                        <button 
+                            onClick={() => setShowSportPicker(!showSportPicker)}
+                            className={`w-full h-[52px] bg-black/40 border rounded-xl text-2xl flex items-center justify-center transition-all ${showSportPicker ? 'border-blue-500 bg-blue-500/10' : 'border-white/10'}`}
+                        >
+                            {form.sport}
+                        </button>
+                        {showSportPicker && (
+                            <>
+                                <div className="fixed inset-0 z-40" onClick={() => setShowSportPicker(false)} />
+                                <div className="absolute top-full left-0 mt-2 p-3 bg-[#1a1a1a] border border-white/20 rounded-2xl grid grid-cols-4 gap-2 z-50 backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] min-w-[200px]">
+                                    {SPORTS.map(s => (
+                                        <button 
+                                            key={s} 
+                                            onClick={() => { setForm({...form, sport: s}); setShowSportPicker(false); }}
+                                            className="w-11 h-11 flex items-center justify-center rounded-xl hover:bg-blue-500/20 hover:border hover:border-blue-500/50 transition-all text-2xl"
+                                        >
+                                            {s}
+                                        </button>
+                                    ))}
+                                </div>
+                            </>
+                        )}
+                    </div>
+
+                    <input placeholder="Utakmica" value={form.matchName} onChange={e => setForm({...form, matchName: e.target.value})} className="h-[52px] bg-black/40 border border-white/10 rounded-xl px-4 text-sm outline-none focus:border-blue-500 text-white" />
+                    <input placeholder="Tip" value={form.tip} onChange={e => setForm({...form, tip: e.target.value})} className="h-[52px] bg-black/40 border border-white/10 rounded-xl px-3 text-sm outline-none focus:border-blue-500 text-center text-white" />
+                    <input type="number" placeholder="Kvota" value={form.odds} onChange={e => setForm({...form, odds: e.target.value})} className="h-[52px] bg-black/40 border border-white/10 rounded-xl px-3 text-sm outline-none focus:border-blue-500 text-center font-bold text-white" />
+                    
+                    <button 
+                    onClick={handleAdd} 
+                    disabled={isSubmitting} 
+                    className={`h-[52px] bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-400 hover:to-blue-500 text-black font-black uppercase rounded-xl transition-all active:scale-95 px-8 shadow-lg shadow-blue-500/20 whitespace-nowrap
+                    ${isSubmitting ? 'opacity-50 cursor-not-allowed grayscale' : ''}`}
+                    >
+                    {isSubmitting ? "..." : "DODAJ"}
+                    </button>
+                </div>
+                </div>
+            ) : (
+                // VIEW ONLY MESSAGE
+                <div className="p-8 text-center border border-white/5 bg-white/5 rounded-3xl flex flex-col items-center justify-center gap-2">
+                    <span className="text-3xl">🔒</span>
+                    <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                        View Only Mode • Log in as {activePlayer} to edit
+                    </span>
+                </div>
+            )}
 
             {/* TABLE FEED */}
             <div className="space-y-4">
@@ -138,9 +188,9 @@ export default function PlayerTable({ allBets, activePlayer, setActivePlayer, on
 
                   <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
                     {[row.match1, row.match2].map((m, idx) => (
-                      <div key={idx} onClick={() => onToggleStatus(row.date, idx === 0 ? "match1" : "match2")} className={`p-4 rounded-2xl border cursor-pointer transition-all backdrop-blur-sm ${getStatusColor(m.status)} ${m.status === 'empty' ? 'opacity-30 grayscale' : 'hover:scale-[1.02] shadow-lg'}`}>
+                      <div key={idx} onClick={() => isOwner && onToggleStatus(row.date, idx === 0 ? "match1" : "match2")} className={`p-4 rounded-2xl border transition-all backdrop-blur-sm ${getStatusColor(m.status)} ${m.status === 'empty' ? 'opacity-30 grayscale' : isOwner ? 'cursor-pointer hover:scale-[1.02] shadow-lg' : 'cursor-default'}`}>
                         <div className="flex justify-between items-center mb-1">
-                          <span className="text-[10px] font-bold uppercase tracking-widest opacity-60"> UTAKMICA {idx + 1}</span>
+                          <span className="text-[10px] font-bold uppercase tracking-widest opacity-60">{m.sport || "⚽"} UTAKMICA {idx + 1}</span>
                           {m.status !== 'empty' && <span className="font-black text-lg">{m.odds.toFixed(2)}</span>}
                         </div>
                         <div className="text-sm font-bold truncate uppercase">{m.name || "---"}</div>

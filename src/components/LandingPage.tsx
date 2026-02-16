@@ -1,11 +1,19 @@
 import React from 'react';
-
+import { supabase } from '../lib/supabase'; // Import Supabase to handle logout
 interface Props {
   onNavigate: (view: "leaderboard" | "tables") => void;
 }
 
 export default function LandingPage({ onNavigate }: Props) {
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    // The App.tsx/page.tsx will automatically detect this and show the Login screen
+  }; 
+
   return (
+
+    
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-blue-900 flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans">
       
       {/* DECORATIVE BACKGROUND ELEMENTS */}
@@ -77,7 +85,18 @@ export default function LandingPage({ onNavigate }: Props) {
           <div className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Updates</div>
         </div>
       </div>
-
+      {/* FOOTER / LOGOUT BUTTON */}
+      <div className="absolute bottom-8 w-full flex justify-center items-center">
+        <button 
+          onClick={handleLogout}
+          className="group flex items-center gap-2 px-6 py-3 rounded-full bg-white/5 border border-white/5 hover:bg-red-500/10 hover:border-red-500/30 transition-all"
+        >
+          <div className="w-2 h-2 rounded-full bg-red-500 group-hover:animate-ping" />
+          <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 group-hover:text-red-400 transition-colors">
+            Log Out
+          </span>
+        </button>
+      </div>
     </div>
   );
 }

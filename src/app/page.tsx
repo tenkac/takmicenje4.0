@@ -1,65 +1,82 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { AllPlayersData, Match, BettingRow, EMPTY_MATCH, PLAYERS } from "../types";
+import { AllPlayersData, Match, BettingRow, EMPTY_MATCH } from "../types";
 import LandingPage from "../components/LandingPage";
 import Leaderboard from "../components/Leaderboard";
 import PlayerTable from "../components/PlayerTable";
-import { supabase } from "../lib/supabase"; // Import the DB connection
+import Login from "../components/Login"; // <--- NEW IMPORT
+import { supabase } from "../lib/supabase"; 
 
 export default function BettingApp() {
+  // --- STATE ---
   const [currentView, setCurrentView] = useState<"landing" | "leaderboard" | "tables">("landing");
   const [activePlayer, setActivePlayer] = useState<string>("Vlado");
-  const [loading, setLoading] = useState(true); // Loading state
-
+  
+  // DATA STATE
   const [allBets, setAllBets] = useState<AllPlayersData>({
     Vlado: [], Fika: [], Labud: [], Ilija: [], Dzoni: [],
   });
 
-  // --- 1. FETCH DATA FROM DATABASE ---
-  const fetchBets = async () => {
-    setLoading(true);
-    // Get all rows from the 'player_bets' table
-    const { data, error } = await supabase
-      .from('player_bets')
-      .select('player_name, bets');
+  // AUTH STATE <--- NEW
+  const [session, setSession] = useState<any>(null);
+  const [appLoading, setAppLoading] = useState(true); // Renamed to cover both Auth & Data
 
-    if (error) {
-      console.error('Error fetching:', error);
-    } else if (data) {
-      // Convert database rows back to our app format
-      const newAllBets: AllPlayersData = { ...allBets };
-      data.forEach((row: any) => {
-        if (newAllBets[row.player_name]) {
-            newAllBets[row.player_name] = row.bets || [];
-        }
-      });
-      setAllBets(newAllBets);
-    }
-    setLoading(false);
-  };
-
-  // Run fetch when the app starts
+  // --- 1. INITIALIZATION (Auth & Data) ---
   useEffect(() => {
-    fetchBets();
+    const initApp = async () => {
+      setAppLoading(true);
+
+      // A. Check for existing session
+      const { data: { session: existingSession } } = await supabase.auth.getSession();
+      setSession(existingSession);
+
+      // B. Fetch Data (We do this regardless of login since your DB is public-read)
+      const { data: betsData, error } = await supabase
+        .from('player_bets')
+        .select('player_name, bets');
+
+      if (betsData) {
+        const newAllBets: AllPlayersData = { ...allBets };
+        betsData.forEach((row: any) => {
+          if (newAllBets[row.player_name]) {
+            newAllBets[row.player_name] = row.bets || [];
+          }
+        });
+        setAllBets(newAllBets);
+      }
+
+      setAppLoading(false);
+    };
+
+    initApp();
+
+    // C. Listen for Auth Changes (Login/Logout)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  // --- 2. SAVE SPECIFIC PLAYER TO DATABASE ---
+
+  // --- 2. SAVE TO DB ---
   const savePlayerToDb = async (playerName: string, updatedRows: BettingRow[]) => {
     const { error } = await supabase
       .from('player_bets')
-      .update({ bets: updatedRows })     // Update the 'bets' column
-      .eq('player_name', playerName);    // Where name equals the player
+      .update({ bets: updatedRows })
+      .eq('player_name', playerName);
 
     if (error) console.error("Error saving:", error);
   };
 
-
-  // --- LOGIC: Add Pick ---
+  // --- 3. ADD PICK LOGIC ---
   const addPick = (date: string, sport: string, matchName: string, tip: string, odds: number) => {
+    // Optional: Double check ownership here if you want extra security
+    // if (session?.user.email !== OWNER_EMAILS[activePlayer]) return;
+
     const newMatch: Match = { sport, name: matchName, tip, odds, status: "pending" };
 
     setAllBets((prev) => {
-      // 1. Calculate the new state locally (so the UI feels instant)
       const rows = prev[activePlayer] ? [...prev[activePlayer]] : [];
       const index = rows.findIndex((r) => r.date === date);
 
@@ -85,14 +102,12 @@ export default function BettingApp() {
         rows.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
       }
 
-      // 2. Save to Database immediately
       savePlayerToDb(activePlayer, rows);
-
       return { ...prev, [activePlayer]: rows };
     });
   };
 
-  // --- LOGIC: Toggle Status ---
+  // --- 4. TOGGLE LOGIC ---
   const toggleStatus = (date: string, matchKey: "match1" | "match2") => {
     setAllBets((prev) => {
       const rows = prev[activePlayer].map((row) => {
@@ -104,22 +119,21 @@ export default function BettingApp() {
         return row;
       });
 
-      // Save to Database immediately
       savePlayerToDb(activePlayer, rows);
-
       return { ...prev, [activePlayer]: rows };
     });
   };
 
-if (loading) return (
+  // --- 5. RENDER HELPERS ---
+
+  // A. Loading Screen
+  if (appLoading) return (
     <div className="h-screen flex flex-col items-center justify-center bg-gradient-to-br from-gray-900 via-black to-blue-900 text-white font-sans p-6 text-center">
-      {/* Background Glows for consistency */}
       <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-blue-600/10 blur-[120px] rounded-full pointer-events-none" />
       <div className="absolute bottom-[-10%] left-[-10%] w-96 h-96 bg-orange-600/10 blur-[120px] rounded-full pointer-events-none" />
-
       <div className="relative z-10 animate-pulse">
         <h1 className="text-4xl md:text-7xl font-black italic uppercase tracking-tighter leading-none mb-4">
-          TAKMICENJE <span className="text-blue-500"></span>
+          KLANICA <span className="text-blue-500">LIVE</span>
         </h1>
         <div className="flex items-center justify-center gap-2">
           <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
@@ -127,20 +141,36 @@ if (loading) return (
           <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
         </div>
         <p className="mt-6 text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-[0.4em]">
-          Entering the Arena
+          Authenticating
         </p>
       </div>
     </div>
   );
-  if (currentView === "landing") return <LandingPage onNavigate={setCurrentView} />;
-  
-  if (currentView === "leaderboard") {
-    // When viewing leaderboard, refresh data first to see other players' updates
-    return <Leaderboard allBets={allBets} onBack={() => { fetchBets(); setCurrentView("landing"); }} />;
+
+  // B. Login Wall (If not logged in, STOP here)
+  if (!session) {
+    return <Login onLogin={() => { /* Session updates automatically via onAuthStateChange */ }} />;
+  }
+
+  // C. Main App Views
+  if (currentView === "landing") {
+     return <LandingPage onNavigate={setCurrentView} />;
   }
   
- // Inside src/app/page.tsx, update the return statement for PlayerTable:
-
+  if (currentView === "leaderboard") {
+    return (
+        <Leaderboard 
+            allBets={allBets} 
+            onBack={() => { 
+                // Refresh data when coming back from leaderboard
+                // (Optional, but good practice)
+                setCurrentView("landing"); 
+            }} 
+        />
+    );
+  }
+  
+  // D. Player Table (The Arena)
   return (
     <PlayerTable
       allBets={allBets}
@@ -148,8 +178,8 @@ if (loading) return (
       setActivePlayer={setActivePlayer}
       onAddPick={addPick}
       onToggleStatus={toggleStatus}
-      // FIX: Just change the view. Don't trigger extra logic that might conflict with the state.
       onBack={() => setCurrentView("landing")}
+      userEmail={session.user.email} // <--- PASS EMAIL DOWN
     />
   );
 }
