@@ -8,11 +8,11 @@ interface Props {
 
 // --- PLAYER THEMES (Copying this here so it matches PlayerTable) ---
 const PLAYER_THEMES: Record<string, { bg: string, text: string, icon: string }> = {
-  "Vlado":  { bg: "bg-blue-600",   text: "text-blue-600",   icon: "/Avatars/vlado.png?v=1" },
-  "Fika":   { bg: "bg-red-600",    text: "text-red-600",    icon: "/Avatars/fika.png?v=1" },
-  "Labud":  { bg: "bg-green-600",  text: "text-green-600",  icon: "/Avatars/labud.png?v=1" },
-  "Ilija":  { bg: "bg-purple-600", text: "text-purple-600", icon: "/Avatars/ilija.png?v=1" },
-  "Dzoni":  { bg: "bg-yellow-500", text: "text-yellow-600", icon: "/Avatars/dzoni.png?v=1" },
+  "Vlado":  { bg: "bg-blue-600",   text: "text-blue-600",   icon: "/Avatars/vlado.jpg" },
+  "Fika":   { bg: "bg-red-600",    text: "text-red-600",    icon: "/Avatars/fika.jpg" },
+  "Labud":  { bg: "bg-green-600",  text: "text-green-600",  icon: "/Avatars/labud.jpg" },
+  "Ilija":  { bg: "bg-purple-600", text: "text-purple-600", icon: "/Avatars/ilija.jpg" },
+  "Dzoni":  { bg: "bg-yellow-500", text: "text-yellow-600", icon: "/Avatars/dzoni.jpg" },
 };
 
 export default function Leaderboard({ allBets, onBack }: Props) {
