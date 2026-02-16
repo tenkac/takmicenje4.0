@@ -9,7 +9,7 @@ interface Props {
   onAddPick: (date: string, sport: string, matchName: string, tip: string, odds: number) => void;
   onToggleStatus: (date: string, matchKey: "match1" | "match2") => void;
   onBack: () => void;
-  userEmail?: string; // <--- NEW: Accepts the logged-in user's email
+  userEmail?: string;
 }
 
 const PLAYER_THEMES: Record<string, { bg: string, text: string, border: string, icon: string }> = {
@@ -20,39 +20,23 @@ const PLAYER_THEMES: Record<string, { bg: string, text: string, border: string, 
   "Dzoni":  { bg: "bg-yellow-500", text: "text-yellow-400", border: "border-yellow-500/50", icon: "/Avatars/dzoni.jpg" },
 };
 
-// --- CONFIGURATION ---
-const SPORTS = ["⚽", "🏀", "🎾", "🏒", "🤾", "🏐", "🏓", "🤽", "🎯", "🥊"];
-
-// ⚠️ UPDATE THESE EMAILS TO MATCH YOUR SUPABASE USERS
-const PLAYER_EMAILS: Record<string, string> = {
-    "Vlado": "vlado@takmicenje.com",
-    "Fika": "fika@takmicenje.com",
-    "Labud": "labud@takmicenje.com",
-    "Ilija": "ilija@takmicenje.com",
-    "Dzoni": "dzoni@takmicenje.com",
-};
+//const SPORTS = ["⚽", "🏀", "🎾", "🏒", "🤾", "🏐", "⚾", "🏓", "🤽", "🎯", "🏏", "🥌"];
 
 export default function PlayerTable({ allBets, activePlayer, setActivePlayer, onAddPick, onToggleStatus, onBack, userEmail }: Props) {
   const theme = PLAYER_THEMES[activePlayer] || PLAYER_THEMES["Vlado"];
   const [form, setForm] = useState({ date: new Date().toLocaleDateString('en-CA'), sport: "⚽", matchName: "", tip: "", odds: "" });
-  const [showSportPicker, setShowSportPicker] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // --- SECURITY CHECK ---
-  // If userEmail is undefined (not logged in) or doesn't match the active player's email, they are a "Viewer"
-  // --- SECURITY CHECK ---
-  const ADMIN_EMAIL = "vlado@takmicenje.com"; // ⚠️ Must match the SQL email exactly
-
-  // Logic: 
-  // 1. Are they the Admin? -> YES, allow edit.
-  // 2. Are they the owner of this tab? -> YES, allow edit.
+  // Allow if Admin OR if Owner
+  const ADMIN_EMAIL = "vlado@takmicenje.com"; 
   const isOwner = 
     userEmail === ADMIN_EMAIL || 
     (userEmail && userEmail.split('@')[0].toLowerCase() === activePlayer.toLowerCase());
+
   const handleAdd = async () => {
     if (isSubmitting) return;
 
-    // Validate
     const result = betSchema.safeParse(form);
     if (!result.success) {
       alert(result.error.issues[0].message);
@@ -118,40 +102,26 @@ export default function PlayerTable({ allBets, activePlayer, setActivePlayer, on
           {/* MAIN ARENA */}
           <div className="flex-1 space-y-8">
             
-            {/* 🔒 SECURITY CHECK: ONLY SHOW FORM IF OWNER */}
+            {/* 🔒 SECURITY CHECK: ONLY SHOW FORM IF OWNER OR ADMIN */}
             {isOwner ? (
                 <div className="bg-white/5 border border-white/10 p-6 rounded-3xl backdrop-blur-md shadow-xl relative z-40">
                 <h3 className="text-xs font-black uppercase tracking-[0.3em] text-gray-500 mb-4">Dodaj par</h3>
                 
                 {/* IMPROVED LAYOUT GRID */}
                 <div className="grid grid-cols-2 md:grid-cols-[1.2fr_0.6fr_2fr_1fr_1fr_auto] gap-3 items-stretch">
+                    
+                    {/* DATE */}
                     <input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="h-[52px] bg-black/40 border border-white/10 rounded-xl px-3 text-sm outline-none focus:border-blue-500 text-white" />
                     
-                    {/* SPORT PICKER */}
-                    <div className="relative">
-                        <button 
-                            onClick={() => setShowSportPicker(!showSportPicker)}
-                            className={`w-full h-[52px] bg-black/40 border rounded-xl text-2xl flex items-center justify-center transition-all ${showSportPicker ? 'border-blue-500 bg-blue-500/10' : 'border-white/10'}`}
-                        >
-                            {form.sport}
-                        </button>
-                        {showSportPicker && (
-                            <>
-                                <div className="fixed inset-0 z-40" onClick={() => setShowSportPicker(false)} />
-                                <div className="absolute top-full left-0 mt-2 p-3 bg-[#1a1a1a] border border-white/20 rounded-2xl grid grid-cols-4 gap-2 z-50 backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] min-w-[200px]">
-                                    {SPORTS.map(s => (
-                                        <button 
-                                            key={s} 
-                                            onClick={() => { setForm({...form, sport: s}); setShowSportPicker(false); }}
-                                            className="w-11 h-11 flex items-center justify-center rounded-xl hover:bg-blue-500/20 hover:border hover:border-blue-500/50 transition-all text-2xl"
-                                        >
-                                            {s}
-                                        </button>
-                                    ))}
-                                </div>
-                            </>
-                        )}
-                    </div>
+                    {/* STANDARD SPORT SELECT */}
+                    {/* <select 
+                      value={form.sport}
+                      onChange={e => setForm({...form, sport: e.target.value})}
+                      className="h-[52px] bg-black/40 border border-white/10 rounded-xl px-2 text-xl outline-none focus:border-blue-500 text-white text-center cursor-pointer appearance-none hover:bg-white/5 transition-colors"
+                      style={{ textAlignLast: 'center' }}
+                    >
+                      {SPORTS.map(s => <option key={s} value={s} className="bg-gray-900 text-xl">{s}</option>)}
+                    </select> */}
 
                     <input placeholder="Utakmica" value={form.matchName} onChange={e => setForm({...form, matchName: e.target.value})} className="h-[52px] bg-black/40 border border-white/10 rounded-xl px-4 text-sm outline-none focus:border-blue-500 text-white" />
                     <input placeholder="Tip" value={form.tip} onChange={e => setForm({...form, tip: e.target.value})} className="h-[52px] bg-black/40 border border-white/10 rounded-xl px-3 text-sm outline-none focus:border-blue-500 text-center text-white" />
