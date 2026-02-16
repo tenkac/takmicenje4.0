@@ -95,7 +95,7 @@ export default function PlayerTable({ allBets, activePlayer, setActivePlayer, on
                       <div key={idx} onClick={() => onToggleStatus(row.date, idx === 0 ? "match1" : "match2")} className={`p-4 rounded-2xl border cursor-pointer transition-all backdrop-blur-sm ${getStatusColor(m.status)} ${m.status === 'empty' ? 'opacity-30 grayscale' : 'hover:scale-[1.02] shadow-lg'}`}>
                         <div className="flex justify-between items-center mb-1">
                           <span className="text-[10px] font-bold uppercase tracking-widest opacity-60">{m.sport || "⚽"} UTAKMICA {idx + 1}</span>
-                          {m.status !== 'empty' && <span className="font-black text-lg">@{m.odds.toFixed(2)}</span>}
+                          {m.status !== 'empty' && <span className="font-black text-lg">{m.odds.toFixed(2)}</span>}
                         </div>
                         <div className="text-sm font-bold truncate uppercase">{m.name || "---"}</div>
                         <div className="text-[10px] font-black text-white/40 uppercase">TIP: <span className="text-white">{m.tip || "---"}</span></div>
