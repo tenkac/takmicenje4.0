@@ -133,7 +133,7 @@ export default function BettingApp() {
       <div className="absolute bottom-[-10%] left-[-10%] w-96 h-96 bg-orange-600/10 blur-[120px] rounded-full pointer-events-none" />
       <div className="relative z-10 animate-pulse">
         <h1 className="text-4xl md:text-7xl font-black italic uppercase tracking-tighter leading-none mb-4">
-          KLANICA <span className="text-blue-500">LIVE</span>
+          TAKMICENJE <span className="text-blue-500">LIVE</span>
         </h1>
         <div className="flex items-center justify-center gap-2">
           <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
