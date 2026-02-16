@@ -104,7 +104,7 @@ export default function Leaderboard({ allBets, onBack }: Props) {
                       {mostWins.player !== "---" && <img src={PLAYER_THEMES[mostWins.player].icon} className="w-full h-full object-cover" />}
                   </div>
                   <div className="z-10">
-                      <div className="text-[10px] font-bold text-green-400 uppercase tracking-widest">Najkonstantniji</div>
+                      <div className="text-[10px] font-bold text-green-400 uppercase tracking-widest">Hasler</div>
                       <div className="text-xl font-black uppercase italic">{mostWins.player}</div>
                       <div className="text-xs text-gray-400">Konstantni Performans</div>
                   </div>
@@ -117,7 +117,7 @@ export default function Leaderboard({ allBets, onBack }: Props) {
 
           {/* --- THE CHASERS LIST --- */}
           <div className="flex flex-col gap-3 pb-8">
-            <div className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 pl-2">The Chasers</div>
+            <div className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 pl-2">Jahači</div>
             {chasers.map((rank, index) => {
                 const theme = PLAYER_THEMES[rank.name];
                 return (
