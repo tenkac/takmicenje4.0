@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AllPlayersData, PLAYERS, MatchStatus } from '../types';
+import { betSchema } from '../utils/validation';
 
 interface Props {
   allBets: AllPlayersData;
@@ -21,11 +22,37 @@ const PLAYER_THEMES: Record<string, { bg: string, text: string, border: string, 
 export default function PlayerTable({ allBets, activePlayer, setActivePlayer, onAddPick, onToggleStatus, onBack }: Props) {
   const theme = PLAYER_THEMES[activePlayer] || PLAYER_THEMES["Vlado"];
   const [form, setForm] = useState({ date: new Date().toLocaleDateString('en-CA'), sport: "⚽", matchName: "", tip: "", odds: "" });
+  
+  // STATE FOR DEBOUNCE
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleAdd = () => {
-    if (!form.matchName || !form.odds) return alert("Missing info!");
-    onAddPick(form.date, form.sport, form.matchName, form.tip, parseFloat(form.odds));
-    setForm({ ...form, matchName: "", tip: "", odds: "" });
+  const handleAdd = async () => {
+    // 1. Check if already locked (Prevent Double Clicks)
+    if (isSubmitting) return;
+
+    // 2. Validate the form data against the schema
+    const result = betSchema.safeParse(form);
+
+    // 3. If validation fails, show error and stop (Don't lock)
+    if (!result.success) {
+      const firstError = result.error.issues[0].message;
+      alert(firstError);
+      return;
+    }
+
+    // 4. Lock the button
+    setIsSubmitting(true);
+
+    try {
+      // 5. Submit valid data
+      onAddPick(result.data.date, result.data.sport, result.data.matchName, result.data.tip, result.data.odds);
+      setForm({ ...form, matchName: "", tip: "", odds: "" });
+    } catch (e) {
+      console.error(e);
+    } finally {
+      // 6. Unlock after 1 second
+      setTimeout(() => setIsSubmitting(false), 1000);
+    }
   };
 
   const getStatusColor = (s: MatchStatus) => {
@@ -33,19 +60,20 @@ export default function PlayerTable({ allBets, activePlayer, setActivePlayer, on
     if (s === "loss") return "bg-red-500/20 text-red-400 border-red-500/50";
     return "bg-white/5 text-gray-400 border-white/10";
   };
+
   const isDateLocked = (rowDate: string) => {
-  const today = new Date().toLocaleDateString('en-CA'); 
-  return rowDate < today;
-};
+    const today = new Date().toLocaleDateString('en-CA'); 
+    return rowDate < today;
+  };
+
   return (
-    // UPDATED MAIN CONTAINER WITH LANDING PAGE GLOW
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-blue-900 text-white font-sans selection:bg-orange-500/30 relative overflow-hidden">
       
-      {/* DECORATIVE BACKGROUND GLOWS (Copied from LandingPage) */}
+      {/* DECORATIVE BACKGROUND GLOWS */}
       <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-blue-600/20 blur-[120px] rounded-full pointer-events-none" />
       <div className="absolute bottom-[-10%] left-[-10%] w-96 h-96 bg-orange-600/10 blur-[120px] rounded-full pointer-events-none" />
 
-      {/* CONTENT WRAPPER (z-10 ensures it sits above the glow) */}
+      {/* CONTENT WRAPPER */}
       <div className="relative z-10">
         
         {/* GLASS HEADER */}
@@ -56,75 +84,25 @@ export default function PlayerTable({ allBets, activePlayer, setActivePlayer, on
           <div className="flex flex-col items-center">
             <h1 className="text-xl md:text-2xl font-black tracking-tighter italic uppercase text-white">KLANICA <span className="text-blue-500">LIVE</span></h1>
           </div>
-          <div className="w-20"></div> {/* Spacer */}
+          <div className="w-20"></div>
         </div>
 
         <div className="max-w-7xl mx-auto p-4 lg:p-8 flex flex-col lg:flex-row gap-8">
-                  {/* PLAYER NAV */}
-                  <div className="
-                                    /* Sidebar Container */
-                                    w-full lg:w-80           /* Increased desktop width to 320px */
-                                    flex lg:flex-col         /* Row on mobile, Column on desktop */
-                                    gap-3 lg:gap-4 
-                                    p-4 lg:p-6
-                                    
-                                    /* Scrolling Logic */
-                                    overflow-x-auto          /* Enable horizontal scroll on mobile */
-                                    lg:overflow-x-hidden     /* Kill horizontal scroll on desktop */
-                                    lg:overflow-y-auto       /* Allow vertical scroll if many players */
-                                    
-                                    scrollbar-hide           /* Keep it clean */
-                                    flex-shrink-0            /* Prevent the sidebar from being squashed */
-                                    "
-                    >
-                      {PLAYERS.map(p => {
-                          const isActive = activePlayer === p;
-                          const pTheme = PLAYER_THEMES[p];
-
-                          return (
-                              <button
-                                  key={p}
-                                  onClick={() => setActivePlayer(p)}
-                                  className={`
-                                            flex-shrink-0 flex items-center 
-                                            gap-4 lg:gap-6 
-                                            p-3 lg:p-5 
-                                            rounded-2xl lg:rounded-[2.5rem] 
-                                            border transition-all duration-300
-                                            w-auto lg:w-full      /* Auto width on mobile, Full width on desktop */
-                                            ${isActive
-                                          ? `${pTheme.border} bg-white/10 backdrop-blur-md shadow-2xl scale-100 lg:scale-105`
-                                          : "border-transparent opacity-40 hover:opacity-100 hover:bg-white/5"
-                                                }
-                                             `}
-                              >
-                                  {/* AVATAR CONTAINER */}
-                                  <div className={`
-                                                relative flex-shrink-0 rounded-full overflow-hidden border-2 border-white/20 shadow-lg
-                                                w-10 h-10       /* Mobile */
-                                                lg:w-20 lg:h-20 /* Large Desktop */
-                                                ${isActive ? "ring-4 ring-orange-500/20" : ""}
-                                                `}>
-                                      <img
-                                          src={pTheme.icon}
-                                          className="w-full h-full object-cover"
-                                          alt={p}
-                                      />
-                                  </div>
-
-                                  {/* PLAYER NAME */}
-                                    <span className={`
-                                        font-black uppercase tracking-widest whitespace-nowrap /* Prevents text from cutting off or wrapping */
-                                        text-xs         /* Mobile */
-                                        lg:text-xl      /* Desktop */
-                                        ${isActive ? pTheme.text : "text-white"}
-                     `}>
-                                      {p}
-                                  </span>
-                              </button>
-                          );
-                      })}
-                  </div>
+            {/* PLAYER NAV */}
+            <div className="w-full lg:w-80 flex lg:flex-col gap-3 overflow-x-auto lg:overflow-x-hidden lg:overflow-y-auto p-4 lg:p-6 scrollbar-hide flex-shrink-0">
+              {PLAYERS.map(p => {
+                  const isActive = activePlayer === p;
+                  const pTheme = PLAYER_THEMES[p];
+                  return (
+                      <button key={p} onClick={() => setActivePlayer(p)} className={`flex-shrink-0 flex items-center gap-4 lg:gap-6 p-3 lg:p-5 rounded-2xl lg:rounded-[2.5rem] border transition-all duration-300 w-auto lg:w-full ${isActive ? `${pTheme.border} bg-white/10 backdrop-blur-md shadow-2xl scale-100 lg:scale-105` : "border-transparent opacity-40 hover:opacity-100 hover:bg-white/5"}`}>
+                          <div className={`relative flex-shrink-0 rounded-full overflow-hidden border-2 border-white/20 shadow-lg w-10 h-10 lg:w-20 lg:h-20 ${isActive ? "ring-4 ring-orange-500/20" : ""}`}>
+                              <img src={pTheme.icon} className="w-full h-full object-cover" alt={p} />
+                          </div>
+                          <span className={`font-black uppercase tracking-widest whitespace-nowrap text-xs lg:text-xl ${isActive ? pTheme.text : "text-white"}`}>{p}</span>
+                      </button>
+                  );
+              })}
+            </div>
 
           {/* MAIN ARENA */}
           <div className="flex-1 space-y-8">
@@ -136,7 +114,16 @@ export default function PlayerTable({ allBets, activePlayer, setActivePlayer, on
                 <input placeholder="Utakmica" value={form.matchName} onChange={e => setForm({...form, matchName: e.target.value})} className="bg-black/40 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-orange-500 col-span-2 md:col-span-1 text-white" />
                 <input placeholder="Tip" value={form.tip} onChange={e => setForm({...form, tip: e.target.value})} className="bg-black/40 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-orange-500 text-center text-white" />
                 <input type="number" placeholder="Kvota" value={form.odds} onChange={e => setForm({...form, odds: e.target.value})} className="bg-black/40 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-orange-500 text-center font-bold text-white" />
-                <button onClick={handleAdd} className="col-span-2 md:col-span-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-400 hover:to-blue-500 text-black font-black uppercase rounded-xl transition-all active:scale-95 py-3 shadow-lg shadow-blue-500/20">DODAJ</button>
+                
+                {/* DEBOUNCED BUTTON */}
+                <button 
+                  onClick={handleAdd} 
+                  disabled={isSubmitting} // Physically disables the button
+                  className={`col-span-2 md:col-span-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-400 hover:to-blue-500 text-black font-black uppercase rounded-xl transition-all active:scale-95 py-3 shadow-lg shadow-blue-500/20
+                  ${isSubmitting ? 'opacity-50 cursor-not-allowed grayscale' : ''}`} // Visual changes
+                >
+                  {isSubmitting ? "..." : "DODAJ"}
+                </button>
               </div>
             </div>
 
