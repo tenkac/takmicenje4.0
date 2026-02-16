@@ -1,65 +1,133 @@
-import Image from "next/image";
+"use client";
+import React, { useState, useEffect } from "react";
+import { AllPlayersData, Match, BettingRow, EMPTY_MATCH, PLAYERS } from "../types";
+import LandingPage from "../components/LandingPage";
+import Leaderboard from "../components/Leaderboard";
+import PlayerTable from "../components/PlayerTable";
+import { supabase } from "../lib/supabase"; // Import the DB connection
 
-export default function Home() {
+export default function BettingApp() {
+  const [currentView, setCurrentView] = useState<"landing" | "leaderboard" | "tables">("landing");
+  const [activePlayer, setActivePlayer] = useState<string>("Vlado");
+  const [loading, setLoading] = useState(true); // Loading state
+
+  const [allBets, setAllBets] = useState<AllPlayersData>({
+    Vlado: [], Fika: [], Labud: [], Ilija: [], Dzoni: [],
+  });
+
+  // --- 1. FETCH DATA FROM DATABASE ---
+  const fetchBets = async () => {
+    setLoading(true);
+    // Get all rows from the 'player_bets' table
+    const { data, error } = await supabase
+      .from('player_bets')
+      .select('player_name, bets');
+
+    if (error) {
+      console.error('Error fetching:', error);
+    } else if (data) {
+      // Convert database rows back to our app format
+      const newAllBets: AllPlayersData = { ...allBets };
+      data.forEach((row: any) => {
+        if (newAllBets[row.player_name]) {
+            newAllBets[row.player_name] = row.bets || [];
+        }
+      });
+      setAllBets(newAllBets);
+    }
+    setLoading(false);
+  };
+
+  // Run fetch when the app starts
+  useEffect(() => {
+    fetchBets();
+  }, []);
+
+  // --- 2. SAVE SPECIFIC PLAYER TO DATABASE ---
+  const savePlayerToDb = async (playerName: string, updatedRows: BettingRow[]) => {
+    const { error } = await supabase
+      .from('player_bets')
+      .update({ bets: updatedRows })     // Update the 'bets' column
+      .eq('player_name', playerName);    // Where name equals the player
+
+    if (error) console.error("Error saving:", error);
+  };
+
+
+  // --- LOGIC: Add Pick ---
+  const addPick = (date: string, sport: string, matchName: string, tip: string, odds: number) => {
+    const newMatch: Match = { sport, name: matchName, tip, odds, status: "pending" };
+
+    setAllBets((prev) => {
+      // 1. Calculate the new state locally (so the UI feels instant)
+      const rows = prev[activePlayer] ? [...prev[activePlayer]] : [];
+      const index = rows.findIndex((r) => r.date === date);
+
+      if (index !== -1) {
+        const existingRow = { ...rows[index] };
+        if (existingRow.match1.status === "empty") {
+            existingRow.match1 = newMatch;
+            rows[index] = existingRow;
+        } else if (existingRow.match2.status === "empty") {
+            existingRow.match2 = newMatch;
+            rows[index] = existingRow;
+        } else {
+            alert("Maximum 2 picks per day allowed!");
+            return prev; 
+        }
+      } else {
+        rows.push({ 
+            id: Date.now(), 
+            date, 
+            match1: newMatch, 
+            match2: { ...EMPTY_MATCH } 
+        });
+        rows.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      }
+
+      // 2. Save to Database immediately
+      savePlayerToDb(activePlayer, rows);
+
+      return { ...prev, [activePlayer]: rows };
+    });
+  };
+
+  // --- LOGIC: Toggle Status ---
+  const toggleStatus = (date: string, matchKey: "match1" | "match2") => {
+    setAllBets((prev) => {
+      const rows = prev[activePlayer].map((row) => {
+        if (row.date === date && row[matchKey].status !== "empty") {
+          const s = row[matchKey].status;
+          const next = s === "pending" ? "win" : s === "win" ? "loss" : "pending";
+          return { ...row, [matchKey]: { ...row[matchKey], status: next } };
+        }
+        return row;
+      });
+
+      // Save to Database immediately
+      savePlayerToDb(activePlayer, rows);
+
+      return { ...prev, [activePlayer]: rows };
+    });
+  };
+
+  if (loading) return <div className="h-screen flex items-center justify-center bg-gray-900 text-white">Loading Bets...</div>;
+
+  if (currentView === "landing") return <LandingPage onNavigate={setCurrentView} />;
+  
+  if (currentView === "leaderboard") {
+    // When viewing leaderboard, refresh data first to see other players' updates
+    return <Leaderboard allBets={allBets} onBack={() => { fetchBets(); setCurrentView("landing"); }} />;
+  }
+  
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <PlayerTable 
+      allBets={allBets} 
+      activePlayer={activePlayer} 
+      setActivePlayer={setActivePlayer} 
+      onAddPick={addPick} 
+      onToggleStatus={toggleStatus}
+      onBack={() => { fetchBets(); setCurrentView("landing"); }} 
+    />
   );
 }
