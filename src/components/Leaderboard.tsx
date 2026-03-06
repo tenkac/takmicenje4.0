@@ -4,6 +4,7 @@ import { AllPlayersData, PLAYERS } from '../types';
 interface Props {
   allBets: AllPlayersData;
   onBack: () => void;
+  onPlayerClick: (playerName: string) => void;
 }
 
 const PLAYER_THEMES: Record<string, { bg: string, text: string, border: string, icon: string }> = {
@@ -14,7 +15,7 @@ const PLAYER_THEMES: Record<string, { bg: string, text: string, border: string, 
   "Dzoni":  { bg: "bg-yellow-500", text: "text-yellow-500", border: "border-yellow-500", icon: "/Avatars/dzoni.jpg" },
 };
 
-export default function Leaderboard({ allBets, onBack }: Props) {
+export default function Leaderboard({ allBets, onBack, onPlayerClick }: Props) {
   
   // --- CALCULATE STATS ---
   let biggestOdd = { player: "---", odds: 0, match: "No Wins Yet" };
@@ -74,28 +75,39 @@ export default function Leaderboard({ allBets, onBack }: Props) {
       <div className="max-w-4xl mx-auto relative z-10">
           
           {/* --- THE PODIUM --- */}
-          {/* Increased gap and bottom padding to handle higher floating names */}
           <div className="flex justify-center items-end gap-2 md:gap-6 mb-12 min-h-[350px] pb-4">
-              {second && <PodiumItem rank={2} data={second} theme={PLAYER_THEMES[second.name]} height="h-48 md:h-64" color="border-gray-300" badge="🥈" />}
-              {first && <PodiumItem rank={1} data={first} theme={PLAYER_THEMES[first.name]} height="h-60 md:h-80" color="border-yellow-400" badge="👑" isWinner />}
-              {third && <PodiumItem rank={3} data={third} theme={PLAYER_THEMES[third.name]} height="h-40 md:h-52" color="border-orange-600" badge="🥉" />}
+              {second && <PodiumItem rank={2} data={second} theme={PLAYER_THEMES[second.name]} height="h-48 md:h-64" color="border-gray-300" badge="🥈" onClick={() => onPlayerClick(second.name)} />}
+              {first && <PodiumItem rank={1} data={first} theme={PLAYER_THEMES[first.name]} height="h-60 md:h-80" color="border-yellow-400" badge="👑" isWinner onClick={() => onPlayerClick(first.name)} />}
+              {third && <PodiumItem rank={3} data={third} theme={PLAYER_THEMES[third.name]} height="h-40 md:h-52" color="border-orange-600" badge="🥉" onClick={() => onPlayerClick(third.name)} />}
           </div>
 
           {/* --- SPECIAL ACHIEVEMENTS --- */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-              <div className="bg-gradient-to-r from-purple-900/40 to-black border border-purple-500/30 p-4 rounded-2xl flex items-center gap-4 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-4 opacity-10 text-6xl rotate-12">🎯</div>
-                  <div className="w-12 h-12 rounded-full border-2 border-purple-500 overflow-hidden shrink-0 z-10 bg-gray-900">
-                      {biggestOdd.player !== "---" && <img src={PLAYER_THEMES[biggestOdd.player].icon} className="w-full h-full object-cover" />}
+              <div className="flex flex-col h-full">
+                  
+                  {/* 1. THE MAIN BOX */}
+                  <div className="bg-gradient-to-r from-purple-900/40 to-black border border-purple-500/30 p-4 rounded-2xl flex items-center gap-4 relative overflow-hidden flex-grow">
+                      <div className="absolute top-0 right-0 p-4 opacity-10 text-6xl rotate-12">🎯</div>
+                      <div className="w-12 h-12 rounded-full border-2 border-purple-500 overflow-hidden shrink-0 z-10 bg-gray-900">
+                          {biggestOdd.player !== "---" && <img src={PLAYER_THEMES[biggestOdd.player].icon} className="w-full h-full object-cover" />}
+                      </div>
+                      <div className="z-10">
+                          <div className="text-[10px] font-bold text-purple-400 uppercase tracking-widest">Sniper Sezone</div>
+                          <div className="text-xl font-black uppercase italic">{biggestOdd.player}</div>
+                          <div className="text-xs text-gray-400 truncate max-w-[200px]">{biggestOdd.match}</div>
+                      </div>
+                      
+                      {/* BIGGEST ODDS ON THE RIGHT */}
+                      <div className="ml-auto text-right z-10">
+                          <div className="text-3xl font-black text-purple-400">{biggestOdd.odds.toFixed(2)}</div>
+                      </div>
                   </div>
-                  <div className="z-10">
-                      <div className="text-[10px] font-bold text-purple-400 uppercase tracking-widest">Sniper Sezone</div>
-                      <div className="text-xl font-black uppercase italic">{biggestOdd.player}</div>
-                      <div className="text-xs text-gray-400 truncate max-w-[200px]">{biggestOdd.match}</div>
+                  
+                  {/* 2. THE TEXT UNDER THE BOX */}
+                  <div className="text-[8px] md:text-[10px] text-white/20 font-black uppercase tracking-widest text-right mt-2 pr-1 select-none hover:text-white/50 transition-colors">
+                      PUŠI GA LABUDE, UBODI VEĆU
                   </div>
-                  <div className="ml-auto text-right z-10">
-                      <div className="text-3xl font-black text-purple-400">{biggestOdd.odds.toFixed(2)}</div>
-                  </div>
+
               </div>
 
               <div className="bg-gradient-to-r from-green-900/40 to-black border border-green-500/30 p-4 rounded-2xl flex items-center gap-4 relative overflow-hidden">
@@ -121,7 +133,12 @@ export default function Leaderboard({ allBets, onBack }: Props) {
             {chasers.map((rank, index) => {
                 const theme = PLAYER_THEMES[rank.name];
                 return (
-                    <div key={rank.name} className="flex items-center p-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-all">
+                    /*  ADDED onClick AND cursor-pointer HERE */
+                    <div 
+                        key={rank.name} 
+                        onClick={() => onPlayerClick(rank.name)}
+                        className="flex items-center p-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 hover:border-blue-500/30 hover:scale-[1.01] cursor-pointer transition-all"
+                    >
                         <div className="w-8 text-xl font-black text-gray-500 italic">#{index + 4}</div>
                         <div className={`w-12 h-12 rounded-full border-2 ${theme.border} overflow-hidden mx-4 bg-gray-900`}>
                             <img src={theme.icon} alt={rank.name} className="w-full h-full object-cover" />
@@ -146,13 +163,14 @@ export default function Leaderboard({ allBets, onBack }: Props) {
   );
 }
 
-function PodiumItem({ rank, data, theme, height, color, badge, isWinner = false }: any) {
+//  ADDED onClick TO THE PROPS HERE
+function PodiumItem({ rank, data, theme, height, color, badge, isWinner = false, onClick }: any) {
     return (
-        <div className="flex flex-col items-center group w-1/3 max-w-[140px] md:max-w-none">
-            {/* SPACING FIX: 
-                Changed mb-4 to mb-8 (mobile) and mb-14 (desktop) 
-                This separates the Name from the top of the block.
-            */}
+        //  ADDED onClick AND cursor-pointer HERE
+        <div 
+            onClick={onClick}
+            className="flex flex-col items-center group w-1/3 max-w-[140px] md:max-w-none cursor-pointer hover:scale-[1.02] transition-transform"
+        >
             <div className={`flex flex-col items-center mb-8 md:mb-14 transition-transform ${isWinner ? 'scale-110 md:scale-125' : 'scale-90 md:scale-100'}`}>
                 <div className="text-2xl md:text-4xl mb-[-10px] z-20 drop-shadow-lg filter">{badge}</div>
                 <div className={`w-16 h-16 md:w-24 md:h-24 rounded-full border-4 ${color} shadow-2xl overflow-hidden relative z-10 bg-gray-900`}>

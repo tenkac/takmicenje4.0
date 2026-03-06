@@ -147,6 +147,21 @@ export default function BettingApp() {
     </div>
   );
 
+  if (currentView === "leaderboard") {
+    return (
+        <Leaderboard 
+            allBets={allBets} 
+            onBack={() => setCurrentView("landing")} 
+            
+            // ADD THIS NEW PROP
+            onPlayerClick={(playerName) => {
+                setActivePlayer(playerName); // 1. Change the active tab to Vlado/Fika/etc.
+                setCurrentView("tables");    // 2. Switch the screen to the Arena
+            }} 
+        />
+    );
+  }
+
   // B. Login Wall (If not logged in, STOP here)
   if (!session) {
     return <Login onLogin={() => { /* Session updates automatically via onAuthStateChange */ }} />;
@@ -157,18 +172,6 @@ export default function BettingApp() {
      return <LandingPage onNavigate={setCurrentView} />;
   }
   
-  if (currentView === "leaderboard") {
-    return (
-        <Leaderboard 
-            allBets={allBets} 
-            onBack={() => { 
-                // Refresh data when coming back from leaderboard
-                // (Optional, but good practice)
-                setCurrentView("landing"); 
-            }} 
-        />
-    );
-  }
   
   // D. Player Table (The Arena)
   return (
