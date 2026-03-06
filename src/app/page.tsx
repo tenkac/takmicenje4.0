@@ -4,8 +4,10 @@ import { AllPlayersData, Match, BettingRow, EMPTY_MATCH } from "../types";
 import LandingPage from "../components/LandingPage";
 import Leaderboard from "../components/Leaderboard";
 import PlayerTable from "../components/PlayerTable";
-import Login from "../components/Login"; // <--- NEW IMPORT
+import Login from "../components/Login";
 import { supabase } from "../lib/supabase"; 
+// 👇 1. NEW IMPORT
+import PullToRefresh from 'react-simple-pull-to-refresh';
 
 export default function BettingApp() {
   // --- STATE ---
@@ -17,9 +19,26 @@ export default function BettingApp() {
     Vlado: [], Fika: [], Labud: [], Ilija: [], Dzoni: [],
   });
 
-  // AUTH STATE <--- NEW
+  // AUTH STATE
   const [session, setSession] = useState<any>(null);
-  const [appLoading, setAppLoading] = useState(true); // Renamed to cover both Auth & Data
+  const [appLoading, setAppLoading] = useState(true);
+
+  // 👇 2. EXTRACTED FETCH LOGIC SO WE CAN REUSE IT
+  const fetchBetsData = async () => {
+    const { data: betsData, error } = await supabase
+      .from('player_bets')
+      .select('player_name, bets');
+
+    if (betsData) {
+      const newAllBets: AllPlayersData = { ...allBets };
+      betsData.forEach((row: any) => {
+        if (newAllBets[row.player_name]) {
+          newAllBets[row.player_name] = row.bets || [];
+        }
+      });
+      setAllBets(newAllBets);
+    }
+  };
 
   // --- 1. INITIALIZATION (Auth & Data) ---
   useEffect(() => {
@@ -30,20 +49,8 @@ export default function BettingApp() {
       const { data: { session: existingSession } } = await supabase.auth.getSession();
       setSession(existingSession);
 
-      // B. Fetch Data (We do this regardless of login since your DB is public-read)
-      const { data: betsData, error } = await supabase
-        .from('player_bets')
-        .select('player_name, bets');
-
-      if (betsData) {
-        const newAllBets: AllPlayersData = { ...allBets };
-        betsData.forEach((row: any) => {
-          if (newAllBets[row.player_name]) {
-            newAllBets[row.player_name] = row.bets || [];
-          }
-        });
-        setAllBets(newAllBets);
-      }
+      // B. Fetch Data using our new helper function
+      await fetchBetsData();
 
       setAppLoading(false);
     };
@@ -56,7 +63,16 @@ export default function BettingApp() {
     });
 
     return () => subscription.unsubscribe();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // 👇 3. PULL-TO-REFRESH HANDLER (WITH VIBRATION)
+  const handleRefresh = async () => {
+    if (navigator.vibrate) {
+      navigator.vibrate(50); // Little buzz when they pull down
+    }
+    await fetchBetsData(); // Fetch the fresh data
+  };
 
 
   // --- 2. SAVE TO DB ---
@@ -71,9 +87,6 @@ export default function BettingApp() {
 
   // --- 3. ADD PICK LOGIC ---
   const addPick = (date: string, sport: string, matchName: string, tip: string, odds: number) => {
-    // Optional: Double check ownership here if you want extra security
-    // if (session?.user.email !== OWNER_EMAILS[activePlayer]) return;
-
     const newMatch: Match = { sport, name: matchName, tip, odds, status: "pending" };
 
     setAllBets((prev) => {
@@ -147,21 +160,6 @@ export default function BettingApp() {
     </div>
   );
 
-  if (currentView === "leaderboard") {
-    return (
-        <Leaderboard 
-            allBets={allBets} 
-            onBack={() => setCurrentView("landing")} 
-            
-            // ADD THIS NEW PROP
-            onPlayerClick={(playerName) => {
-                setActivePlayer(playerName); // 1. Change the active tab to Vlado/Fika/etc.
-                setCurrentView("tables");    // 2. Switch the screen to the Arena
-            }} 
-        />
-    );
-  }
-
   // B. Login Wall (If not logged in, STOP here)
   if (!session) {
     return <Login onLogin={() => { /* Session updates automatically via onAuthStateChange */ }} />;
@@ -172,17 +170,53 @@ export default function BettingApp() {
      return <LandingPage onNavigate={setCurrentView} />;
   }
   
+  // 👇 WRAPPED LEADERBOARD IN PullToRefresh
+  if (currentView === "leaderboard") {
+    return (
+      <PullToRefresh 
+        onRefresh={handleRefresh}
+        pullingContent={
+          <div className="text-center text-gray-500 text-[10px] font-bold uppercase tracking-widest py-6">
+            Vuci na dole da osvežiš...
+          </div>
+        }
+      >
+        {/* We wrap it in a div so the background gradient flows smoothly during the pull animation */}
+        <div className="min-h-screen bg-black">
+          <Leaderboard 
+              allBets={allBets} 
+              onBack={() => setCurrentView("landing")} 
+              onPlayerClick={(playerName) => {
+                  setActivePlayer(playerName); 
+                  setCurrentView("tables");    
+              }} 
+          />
+        </div>
+      </PullToRefresh>
+    );
+  }
   
-  // D. Player Table (The Arena)
+  // 👇 4. WRAPPED PLAYER TABLE IN PullToRefresh
   return (
-    <PlayerTable
-      allBets={allBets}
-      activePlayer={activePlayer}
-      setActivePlayer={setActivePlayer}
-      onAddPick={addPick}
-      onToggleStatus={toggleStatus}
-      onBack={() => setCurrentView("landing")}
-      userEmail={session.user.email} // <--- PASS EMAIL DOWN
-    />
+    <PullToRefresh 
+      onRefresh={handleRefresh}
+      pullingContent={
+        <div className="text-center text-gray-500 text-[10px] font-bold uppercase tracking-widest py-6">
+          Vuci na dole da osvežiš...
+        </div>
+      }
+    >
+      <div className="min-h-screen bg-black text-white">
+        <PlayerTable
+          allBets={allBets}
+          activePlayer={activePlayer}
+          setActivePlayer={setActivePlayer}
+          onAddPick={addPick}
+          onToggleStatus={toggleStatus}
+          onBack={() => setCurrentView("landing")}
+          userEmail={session.user.email} 
+        />
+      </div>
+    </PullToRefresh>
   );
 }
