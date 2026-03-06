@@ -1,6 +1,6 @@
 {
-  "name": "Takmicenje 4.0",
-  "short_name": "Takmicenje",
+  "name": "Takmičenje 4.0",
+  "short_name": "Takmičenje",
   "description": "Secure Betting Terminal for the Takmicenje League",
   "start_url": "/",
   "display": "standalone",
