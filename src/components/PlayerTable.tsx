@@ -149,7 +149,7 @@ export default function PlayerTable({ allBets, activePlayer, setActivePlayer, on
 
             {/* TABLE FEED */}
             <div className="space-y-4">
-              {allBets[activePlayer].map((row) => (
+              {[...allBets[activePlayer]].reverse().map((row) => (
                 <div key={row.date} className="bg-white/5 border border-white/10 rounded-3xl p-6 flex flex-col md:flex-row gap-6 items-center hover:bg-white/[0.07] transition-all backdrop-blur-sm">
                   <div className="flex flex-col items-center justify-center md:border-r border-white/10 pr-6">
                     <span className="text-[10px] font-black uppercase text-gray-500 tracking-tighter">DATUM</span>
