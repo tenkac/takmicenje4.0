@@ -42,8 +42,8 @@ export default function Leaderboard({ allBets, onBack, onPlayerClick }: Props) {
         mostWins = { player, count: winCount };
     }
 
-    const recentForm = allMatches.filter(m => m.status !== 'empty').slice(-5).reverse();
-
+    const recentForm = allMatches.filter(m => m.status === 'win' || m.status === 'loss').slice(-5).reverse();
+    
     return {
         name: player,
         score: parseFloat(totalScore.toFixed(2)),
