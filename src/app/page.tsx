@@ -5,8 +5,10 @@ import LandingPage from "../components/LandingPage";
 import Leaderboard from "../components/Leaderboard";
 import PlayerTable from "../components/PlayerTable";
 import Login from "../components/Login";
-// 👇 1. IMPORTED STATISTICS
-import Statistics from "../components/Statistics"; 
+import dynamic from "next/dynamic";
+
+// Lazy load Statistics — Recharts is chunky, only load it when needed
+const Statistics = dynamic(() => import("../components/Statistics"), { ssr: false });
 import { supabase } from "../lib/supabase"; 
 import PullToRefresh from 'react-simple-pull-to-refresh';
 
@@ -226,7 +228,7 @@ export default function BettingApp() {
       onRefresh={handleRefresh}
       pullingContent={
         <div className="text-center text-gray-500 text-[10px] font-bold uppercase tracking-widest py-6">
-          Vuci na dole da osvežiš...
+          Vuci na dolje da osvježiš...
         </div>
       }
     >
