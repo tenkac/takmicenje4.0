@@ -5,13 +5,15 @@ import LandingPage from "../components/LandingPage";
 import Leaderboard from "../components/Leaderboard";
 import PlayerTable from "../components/PlayerTable";
 import Login from "../components/Login";
+// 👇 1. IMPORTED STATISTICS
+import Statistics from "../components/Statistics"; 
 import { supabase } from "../lib/supabase"; 
-// 👇 1. NEW IMPORT
 import PullToRefresh from 'react-simple-pull-to-refresh';
 
 export default function BettingApp() {
   // --- STATE ---
-  const [currentView, setCurrentView] = useState<"landing" | "leaderboard" | "tables">("landing");
+  // 👇 2. ADDED "statistics" TO THE VIEW LIST
+  const [currentView, setCurrentView] = useState<"landing" | "leaderboard" | "tables" | "statistics">("landing");
   const [activePlayer, setActivePlayer] = useState<string>("Vlado");
   
   // DATA STATE
@@ -23,7 +25,7 @@ export default function BettingApp() {
   const [session, setSession] = useState<any>(null);
   const [appLoading, setAppLoading] = useState(true);
 
-  // 👇 2. EXTRACTED FETCH LOGIC SO WE CAN REUSE IT
+  // EXTRACTED FETCH LOGIC SO WE CAN REUSE IT
   const fetchBetsData = async () => {
     const { data: betsData, error } = await supabase
       .from('player_bets')
@@ -66,7 +68,7 @@ export default function BettingApp() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 👇 3. PULL-TO-REFRESH HANDLER (WITH VIBRATION)
+  // PULL-TO-REFRESH HANDLER (WITH VIBRATION)
   const handleRefresh = async () => {
     if (navigator.vibrate) {
       navigator.vibrate(50); // Little buzz when they pull down
@@ -170,18 +172,17 @@ export default function BettingApp() {
      return <LandingPage onNavigate={setCurrentView} />;
   }
   
-  // 👇 WRAPPED LEADERBOARD IN PullToRefresh
   if (currentView === "leaderboard") {
     return (
       <PullToRefresh 
         onRefresh={handleRefresh}
         pullingContent={
           <div className="text-center text-gray-500 text-[10px] font-bold uppercase tracking-widest py-6">
-            Vuci na dole da osvežiš...
+            Vuci na dolje da osvježiš...
           </div>
         }
       >
-        {/* We wrap it in a div so the background gradient flows smoothly during the pull animation */}
+         {/* We wrap it in a div so the background gradient flows smoothly during the pull animation  */}
         <div className="min-h-screen bg-black">
           <Leaderboard 
               allBets={allBets} 
@@ -190,13 +191,36 @@ export default function BettingApp() {
                   setActivePlayer(playerName); 
                   setCurrentView("tables");    
               }} 
+              // 👇 3. PASSED THE NEW PROP SO THE BUTTON WORKS
+              onViewStats={() => setCurrentView("statistics")} 
+          />
+        </div>
+      </PullToRefresh>
+    );
+  }
+
+  // 👇 4. ADDED THE NEW STATISTICS VIEW BLOCK
+  if (currentView === "statistics") {
+    return (
+      <PullToRefresh 
+        onRefresh={handleRefresh}
+        pullingContent={
+          <div className="text-center text-gray-500 text-[10px] font-bold uppercase tracking-widest py-6">
+            Vuci na dolje da osvježiš...
+          </div>
+        }
+      >
+        <div className="min-h-screen bg-black">
+          <Statistics 
+            allBets={allBets} 
+            onBack={() => setCurrentView("leaderboard")} 
           />
         </div>
       </PullToRefresh>
     );
   }
   
-  // 👇 4. WRAPPED PLAYER TABLE IN PullToRefresh
+  // WRAPPED PLAYER TABLE IN PullToRefresh
   return (
     <PullToRefresh 
       onRefresh={handleRefresh}

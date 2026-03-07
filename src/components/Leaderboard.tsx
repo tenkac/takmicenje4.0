@@ -5,6 +5,7 @@ interface Props {
   allBets: AllPlayersData;
   onBack: () => void;
   onPlayerClick: (playerName: string) => void;
+  onViewStats: () => void; // ✅ Prop is here
 }
 
 const PLAYER_THEMES: Record<string, { bg: string, text: string, border: string, icon: string }> = {
@@ -15,7 +16,7 @@ const PLAYER_THEMES: Record<string, { bg: string, text: string, border: string, 
   "Dzoni":  { bg: "bg-yellow-500", text: "text-yellow-500", border: "border-yellow-500", icon: "/Avatars/dzoni.jpg" },
 };
 
-export default function Leaderboard({ allBets, onBack, onPlayerClick }: Props) {
+export default function Leaderboard({ allBets, onBack, onPlayerClick, onViewStats }: Props) {
   
   // --- CALCULATE STATS ---
   let biggestOdd = { player: "---", odds: 0, match: "No Wins Yet" };
@@ -67,9 +68,17 @@ export default function Leaderboard({ allBets, onBack, onPlayerClick }: Props) {
         </button>
         <div className="text-center">
             <h2 className="text-sm font-bold text-orange-500 uppercase tracking-widest">Sezona 2026</h2>
-            <h1 className="text-2xl md:text-4xl font-black italic uppercase tracking-tighter">Leaderboard</h1>
+            <h1 className="text-2xl md:text-4xl font-black italic uppercase tracking-tighter">Podijum</h1>
         </div>
-        <div className="w-20" />
+        
+        {/* 👇 THE NEW STATS BUTTON 👇 */}
+        <button 
+            onClick={onViewStats} 
+            className="bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 px-4 py-2 rounded-xl border border-blue-500/30 transition-all text-xs font-bold uppercase tracking-widest shadow-[0_0_15px_rgba(59,130,246,0.2)]"
+        >
+            Stats →
+        </button>
+
       </div>
 
       <div className="max-w-4xl mx-auto relative z-10">
@@ -133,7 +142,6 @@ export default function Leaderboard({ allBets, onBack, onPlayerClick }: Props) {
             {chasers.map((rank, index) => {
                 const theme = PLAYER_THEMES[rank.name];
                 return (
-                    /*  ADDED onClick AND cursor-pointer HERE */
                     <div 
                         key={rank.name} 
                         onClick={() => onPlayerClick(rank.name)}
@@ -163,10 +171,8 @@ export default function Leaderboard({ allBets, onBack, onPlayerClick }: Props) {
   );
 }
 
-//  ADDED onClick TO THE PROPS HERE
 function PodiumItem({ rank, data, theme, height, color, badge, isWinner = false, onClick }: any) {
     return (
-        //  ADDED onClick AND cursor-pointer HERE
         <div 
             onClick={onClick}
             className="flex flex-col items-center group w-1/3 max-w-[140px] md:max-w-none cursor-pointer hover:scale-[1.02] transition-transform"
