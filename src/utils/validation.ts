@@ -9,10 +9,10 @@ export const betSchema = z.object({
   
   // Match name: Allow letters, numbers, spaces, dots, dashes, and standard punctuation
   // We removed the strict regex to allow Serbian characters (č, ć, š, etc.)
-  matchName: z.string().min(2, "Match name is too short").max(100, "Match name is too long"),
+  matchName: z.string().min(2, "Match name is too short").max(120, "Match name is too long"),
   
   // Tip: Just limit the length
-  tip: z.string().min(1, "Tip is required").max(30, "Tip is too long"),
+  tip: z.string().min(1, "Tip is required").max(100, "Tip is too long"),
   
   // Odds: We use 'coerce' to turn the input string "1.50" into the number 1.50 automatically
   odds: z.coerce.number()
