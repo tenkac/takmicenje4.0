@@ -112,6 +112,28 @@ export default function Statistics({ allBets, onBack }: Props) {
     ];
   }, [playerStats]);
 
+  // ─── DAYS AT RANK ─────────────────────────────────────────────────────────────
+  const daysAtRank = useMemo(() => {
+    const counts: Record<string, Record<number, number>> = {};
+    PLAYERS.forEach(p => { counts[p] = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }; });
+
+    timelineData.forEach(point => {
+      const sorted = [...PLAYERS].sort((a, b) => (point[b] ?? 0) - (point[a] ?? 0));
+      sorted.forEach((player, i) => {
+        counts[player][i + 1] = (counts[player][i + 1] ?? 0) + 1;
+      });
+    });
+
+    const total = timelineData.length || 1;
+    return PLAYERS.map(p => ({
+      player: p,
+      days: counts[p],
+      pct: Object.fromEntries(
+        Object.entries(counts[p]).map(([rank, days]) => [rank, parseFloat(((days / total) * 100).toFixed(1))])
+      ),
+    }));
+  }, [timelineData]);
+
   // ─── WALL OF SHAME ────────────────────────────────────────────────────────────
   const smallestOdds = useMemo(() => {
     const all: any[] = [];
@@ -233,7 +255,7 @@ export default function Statistics({ allBets, onBack }: Props) {
           </div>
         )}
 
-        {/* ── 4. RADAR PLAYER PROFILE ───────────────────────────────────────── */}
+        {/* ── 3. RADAR PLAYER PROFILE ───────────────────────────────────────── */}
         {mounted && (
         <div className="bg-white/5 border border-white/10 p-6 rounded-3xl backdrop-blur-md shadow-xl">
           <div className="mb-6">
@@ -303,6 +325,76 @@ export default function Statistics({ allBets, onBack }: Props) {
             </div>
           </div>
         </div>
+        )}
+
+        {/* ── 4. DAYS AT RANK ───────────────────────────────────────────────── */}
+        {timelineData.length > 0 && (
+          <div className="bg-white/5 border border-white/10 p-6 rounded-3xl backdrop-blur-md shadow-xl">
+            <div className="mb-6">
+              <h3 className="text-xs font-black uppercase tracking-[0.3em] text-gray-500">Ko je bio gdje</h3>
+              <p className="text-xl font-black uppercase italic tracking-tighter">Dominacija Sezone</p>
+            </div>
+
+            <div className="space-y-5">
+              {daysAtRank.map(({ player, days, pct }) => {
+                const theme = PLAYER_THEMES[player];
+                const rankColors = ['#facc15', '#94a3b8', '#cd7f32', '#6b7280', '#374151'];
+                const rankLabels = ['1.', '2.', '3.', '4.', '5.'];
+                return (
+                  <div key={player}>
+                    <div className="flex items-center gap-3 mb-1.5">
+                      <img src={theme.icon} className="w-6 h-6 rounded-full object-cover border border-white/20" alt={player} />
+                      <span className={`text-xs font-black uppercase tracking-widest ${theme.text}`}>{player}</span>
+
+                    </div>
+
+                    {/* Stacked bar */}
+                    <div className="flex w-full h-7 rounded-xl overflow-hidden gap-px">
+                      {[1, 2, 3, 4, 5].map((rank, i) => {
+                        const width = pct[rank] ?? 0;
+                        if (width === 0) return null;
+                        return (
+                          <div
+                            key={rank}
+                            title={`${rankLabels[i]} mjesto: ${days[rank]}d  (${width}%)`}
+                            style={{ width: `${width}%`, background: rankColors[i] }}
+                            className="flex items-center justify-center transition-all"
+                          >
+                            {width >= 10 && (
+                              <span className="text-[9px] font-black text-black/70 drop-shadow">
+                                {rankLabels[i]}{"   "}{width}%
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Mini breakdown */}
+                    <div className="flex gap-3 mt-1.5 flex-wrap">
+                      {[1, 2, 3, 4, 5].map((rank, i) => (
+                        days[rank] > 0 && (
+                          <span key={rank} className="text-[10px] font-bold" style={{ color: rankColors[i] }}>
+                            {rankLabels[i]} {days[rank]}d <span className="text-gray-600">({pct[rank]}%)</span>
+                          </span>
+                        )
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Legend */}
+            <div className="flex gap-4 mt-6 pt-4 border-t border-white/5 flex-wrap">
+              {['1. Mjesto', '2. Mjesto', '3. Mjesto', '4. Mjesto', '5. Mjesto'].map((label, i) => (
+                <div key={i} className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-sm" style={{ background: ['#facc15', '#94a3b8', '#cd7f32', '#6b7280', '#374151'][i] }} />
+                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
 
         {/* ── 5. WALL OF SHAME ──────────────────────────────────────────────── */}
