@@ -207,8 +207,11 @@ export default function PlayerTable({ allBets, activePlayer, setActivePlayer, on
               <div className="space-y-4">
                 {[...allBets[activePlayer]].reverse().map((row, rowIdx) => {
                   const isToday = row.date === today;
-                  // Fika & Labud can't see match name / tip for today or any future date until the next day starts
-                  const hidePickDetails = isRestrictedViewer && row.date >= today && activePlayer.toLowerCase() !== viewerName;
+                  // Fika & Labud can't see another player's picks for a date until they've added both of their own picks for that same date
+                  const viewerPlayerName = PLAYERS.find(p => p.toLowerCase() === viewerName) ?? '';
+                  const viewerRow = allBets[viewerPlayerName]?.find(r => r.date === row.date);
+                  const viewerHasBothPicks = viewerRow?.match1?.status !== 'empty' && viewerRow?.match2?.status !== 'empty';
+                  const hidePickDetails = isRestrictedViewer && !viewerHasBothPicks && activePlayer.toLowerCase() !== viewerName;
                   return (
                     <div
                       key={row.date}
