@@ -278,7 +278,7 @@ export default function PlayerTable({ allBets, activePlayer, setActivePlayer, on
                               </div>
                               <div className="text-sm font-bold truncate uppercase relative z-10">
                                 {hidePickDetails && m.status !== 'empty'
-                                  ? <span className="text-white/30 italic normal-case tracking-normal font-semibold">🔒 Pušite ga špijuni do sjutra</span>
+                                  ? <span className="text-white/30 italic normal-case tracking-normal font-semibold">🔒 Pušite ga špijuni dok ne dodate oba</span>
                                   : (m.name || "---")
                                 }
                               </div>
