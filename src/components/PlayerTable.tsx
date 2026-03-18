@@ -43,6 +43,11 @@ export default function PlayerTable({ allBets, activePlayer, setActivePlayer, on
     userEmail === ADMIN_EMAIL ||
     (userEmail && userEmail.split('@')[0].toLowerCase() === activePlayer.toLowerCase());
 
+  // Fika and Labud cannot see today's pick details until the next day
+  const RESTRICTED_PLAYERS = ["fika", "labud"];
+  const viewerName = userEmail?.split('@')[0].toLowerCase() ?? '';
+  const isRestrictedViewer = RESTRICTED_PLAYERS.includes(viewerName);
+
   const handleAdd = async () => {
     if (isSubmitting) return;
     const result = betSchema.safeParse(form);
@@ -202,6 +207,8 @@ export default function PlayerTable({ allBets, activePlayer, setActivePlayer, on
               <div className="space-y-4">
                 {[...allBets[activePlayer]].reverse().map((row, rowIdx) => {
                   const isToday = row.date === today;
+                  // Fika & Labud can't see match name / tip for today or any future date until the next day starts
+                  const hidePickDetails = isRestrictedViewer && row.date >= today && activePlayer.toLowerCase() !== viewerName;
                   return (
                     <div
                       key={row.date}
@@ -266,9 +273,16 @@ export default function PlayerTable({ allBets, activePlayer, setActivePlayer, on
                                 </span>
                                 {m.status !== 'empty' && <span className="font-black text-lg">{m.odds.toFixed(2)}</span>}
                               </div>
-                              <div className="text-sm font-bold truncate uppercase relative z-10">{m.name || "---"}</div>
+                              <div className="text-sm font-bold truncate uppercase relative z-10">
+                                {hidePickDetails && m.status !== 'empty'
+                                  ? <span className="text-white/30 italic normal-case tracking-normal font-semibold">🔒 Pušite ga špijuni do sjutra</span>
+                                  : (m.name || "---")
+                                }
+                              </div>
                               <div className="text-[10px] font-black text-white/40 uppercase relative z-10">
-                                TIP: <span className="text-white">{m.tip || "---"}</span>
+                                TIP: <span className="text-white">
+                                  {hidePickDetails && m.status !== 'empty' ? "—" : (m.tip || "---")}
+                                </span>
                               </div>
                             </div>
                           );
