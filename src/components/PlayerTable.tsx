@@ -207,10 +207,14 @@ export default function PlayerTable({ allBets, activePlayer, setActivePlayer, on
               <div className="space-y-4">
                 {[...allBets[activePlayer]].reverse().map((row, rowIdx) => {
                   const isToday = row.date === today;
-                  // Fika & Labud can't see another player's picks for a date until they've added both of their own picks for that same date
+                  // Fika & Labud can't see another player's picks for today or any future date
+                  // until they've submitted both of their own picks for that same date.
                   const viewerPlayerName = PLAYERS.find(p => p.toLowerCase() === viewerName) ?? '';
                   const viewerRow = allBets[viewerPlayerName]?.find(r => r.date === row.date);
-                  const viewerHasBothPicks = viewerRow?.match1?.status !== 'empty' && viewerRow?.match2?.status !== 'empty';
+                  // !!viewerRow guard fixes the case where viewerRow is undefined (no picks yet for
+                  // that date), which would otherwise make both status checks evaluate to true.
+                  const viewerHasBothPicks = !!viewerRow && viewerRow.match1?.status !== 'empty' && viewerRow.match2?.status !== 'empty';
+                  // Per-date: viewer must have both their own picks for a date to see others' picks for that date
                   const hidePickDetails = isRestrictedViewer && !viewerHasBothPicks && activePlayer.toLowerCase() !== viewerName;
                   return (
                     <div
