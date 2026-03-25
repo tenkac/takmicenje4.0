@@ -211,7 +211,7 @@ export default function PlayerTable({ allBets, activePlayer, setActivePlayer, on
                   // until they've submitted both of their own picks for that same date.
                   const viewerPlayerName = PLAYERS.find(p => p.toLowerCase() === viewerName) ?? '';
                   const viewerRow = allBets[viewerPlayerName]?.find(r => r.date === row.date);
-                  // !!viewerRow guard fixes the case where viewerRow is undefined (no picks yet for
+                  // viewerRow guard fixes the case where viewerRow is undefined (no picks yet for
                   // that date), which would otherwise make both status checks evaluate to true.
                   const viewerHasBothPicks = !!viewerRow && viewerRow.match1?.status !== 'empty' && viewerRow.match2?.status !== 'empty';
                   // Per-date: viewer must have both their own picks for a date to see others' picks for that date
@@ -282,7 +282,7 @@ export default function PlayerTable({ allBets, activePlayer, setActivePlayer, on
                               </div>
                               <div className="text-sm font-bold truncate uppercase relative z-10">
                                 {hidePickDetails && m.status !== 'empty'
-                                  ? <span className="text-white/30 italic normal-case tracking-normal font-semibold">🔒 Pušite ga špijuni dok ne dodate oba</span>
+                                  ? <span className="text-white/30 italic normal-case tracking-normal font-semibold">🔒 Ne virite špijuni dok ne dodate oba</span>
                                   : (m.name || "---")
                                 }
                               </div>

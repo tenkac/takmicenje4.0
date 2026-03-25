@@ -405,7 +405,7 @@ export default function Statistics({ allBets, onBack }: Props) {
             <span className="text-3xl drop-shadow-lg">🤡</span>
             <div>
               <h3 className="text-xl font-black uppercase tracking-widest text-red-500 italic">Zid Srama</h3>
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Najmanja muda</p>
+              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Najmanje kvote</p>
             </div>
           </div>
 
